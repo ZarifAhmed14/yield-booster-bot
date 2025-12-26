@@ -106,10 +106,9 @@ const Index = () => {
               {user ? (
                 <>
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={() => navigate("/history")}
-                    className="border-2 border-leaf/30 hover:bg-leaf/10"
+                    className="bg-leaf text-leaf-foreground hover:bg-leaf/90 shadow-md"
                   >
                     <History className="w-4 h-4 mr-2" />
                     {t("history.viewHistory")}
