@@ -2,11 +2,12 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Sprout, MapPin, Beaker, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import DistrictSelect from "@/components/DistrictSelect";
+import { bangladeshDistricts } from "@/data/districts";
 
 interface InputFormProps {
   onSubmit: (data: FormData) => void;
@@ -71,7 +72,7 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedVariety, setSelectedVariety] = useState("");
   const [soilPH, setSoilPH] = useState([6.5]);
-  const [location, setLocation] = useState("Dhaka");
+  const [selectedDistrict, setSelectedDistrict] = useState("dhaka");
 
   const varietiesForCategory = useMemo(() => 
     cropVarieties.filter(c => c.category === selectedCategory), 
@@ -102,10 +103,14 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
     e.preventDefault();
     if (!selectedVariety) return;
     
+    // Get the English name of the district for the API
+    const district = bangladeshDistricts.find(d => d.value === selectedDistrict);
+    const locationName = district ? district.en : "Dhaka";
+    
     onSubmit({
       cropType: selectedVariety,
       soilPH: soilPH[0],
-      location: location || "Dhaka",
+      location: locationName,
     });
   };
 
@@ -254,12 +259,9 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
               <MapPin className="w-6 h-6" />
               {t("form.step3")}
             </Label>
-            <Input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Dhaka, Rangpur, Khulna..."
-              className="h-14 text-xl border-2 border-water/30"
+            <DistrictSelect 
+              value={selectedDistrict} 
+              onChange={setSelectedDistrict} 
             />
             <p className="text-sm text-muted-foreground">
               📍 {t("form.locationHint")}
