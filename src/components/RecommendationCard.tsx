@@ -200,41 +200,38 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
               </div>
             </div>
 
-            {/* NPK info section */}
-            <div className="bg-muted/30 p-3 rounded-lg">
-              <p className="font-semibold text-sm text-center mb-2">
-                {language === "bn" ? "সার প্রয়োজনীয়তা" : "Nutrient Status"}
-              </p>
-              <div className="flex justify-center gap-1.5 mb-2">
-                {[1, 2, 3, 4, 5].map((level) => (
-                  <Beaker
-                    key={level}
-                    className={`w-6 h-6 transition-all duration-300 ${
-                      fertilizer_level === "High"
-                        ? level <= 4
-                          ? "text-destructive animate-pulse"
-                          : "text-muted/20"
-                        : fertilizer_level === "Medium"
-                        ? level <= 3
-                          ? "text-harvest"
-                          : "text-muted/20"
-                        : level <= 1
-                        ? "text-leaf"
-                        : "text-muted/20"
-                    }`}
-                    style={{ animationDelay: `${level * 0.1}s` }}
-                  />
-                ))}
+            {/* NPK with recommended amounts */}
+            {npk_values && (
+              <div className="bg-muted/30 p-3 rounded-lg">
+                <p className="font-semibold text-sm text-center mb-2">{t("result.npk")} - {language === "bn" ? "প্রতি একরে প্রয়োগ করুন" : "Apply per acre"}</p>
+                <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                  <div className="p-2 bg-leaf/20 rounded">
+                    <p className="font-bold text-leaf">N</p>
+                    <p className="text-xs text-muted-foreground">Nitrogen</p>
+                    <p className="font-semibold text-lg">{npk_values.nitrogen}</p>
+                    <p className="text-xs text-leaf font-medium">
+                      {fertilizer_level === "High" ? "25-30" : fertilizer_level === "Medium" ? "15-20" : "5-10"} kg
+                    </p>
+                  </div>
+                  <div className="p-2 bg-harvest/20 rounded">
+                    <p className="font-bold text-harvest">P</p>
+                    <p className="text-xs text-muted-foreground">Phosphorus</p>
+                    <p className="font-semibold text-lg">{npk_values.phosphorus}</p>
+                    <p className="text-xs text-harvest font-medium">
+                      {fertilizer_level === "High" ? "15-20" : fertilizer_level === "Medium" ? "10-15" : "5-8"} kg
+                    </p>
+                  </div>
+                  <div className="p-2 bg-water/20 rounded">
+                    <p className="font-bold text-water">K</p>
+                    <p className="text-xs text-muted-foreground">Potassium</p>
+                    <p className="font-semibold text-lg">{npk_values.potassium}</p>
+                    <p className="text-xs text-water font-medium">
+                      {fertilizer_level === "High" ? "20-25" : fertilizer_level === "Medium" ? "12-18" : "6-10"} kg
+                    </p>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground text-center">
-                {fertilizer_level === "High" 
-                  ? (language === "bn" ? "এখনই সার দিন" : "Apply fertilizer now")
-                  : fertilizer_level === "Medium"
-                  ? (language === "bn" ? "শীঘ্রই সার দিন" : "Apply fertilizer soon")
-                  : (language === "bn" ? "সার প্রয়োজন নেই" : "No fertilizer needed")
-                }
-              </p>
-            </div>
+            )}
           </CardContent>
         </Card>
 
