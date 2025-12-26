@@ -167,42 +167,17 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
       <div className="grid md:grid-cols-2 gap-4">
         
         {/* Fertilizer Card */}
-        <Card className="border-2 border-leaf/30 overflow-hidden">
+        <Card className="border-2 border-leaf/30 overflow-hidden flex flex-col">
           <CardHeader className="py-3 bg-gradient-to-r from-leaf/20 to-leaf/5">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Beaker className="w-5 h-5 text-leaf" />
               🧪 {t("result.fertilizer")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-3 pb-3 space-y-3">
-            {/* Status indicator */}
-            <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-lg ${
-                fertilizer_level === "Low" ? "bg-leaf/20 border border-leaf" :
-                fertilizer_level === "Medium" ? "bg-harvest/20 border border-harvest" :
-                "bg-destructive/20 border border-destructive"
-              }`}>
-                <Beaker className={`w-6 h-6 ${
-                  fertilizer_level === "Low" ? "text-leaf" :
-                  fertilizer_level === "Medium" ? "text-harvest" :
-                  "text-destructive"
-                }`} />
-              </div>
-              <div className="flex-1">
-                <Badge className={`${getFertilizerStyle()} shadow-sm text-sm px-3 py-1`}>
-                  {fertilizer_level === "Low" ? "🟢" : fertilizer_level === "Medium" ? "🟡" : "🔴"} {getFertilizerLabel()}
-                </Badge>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {fertilizer_level === "Low" && t("result.fertilizerMinimal")}
-                  {fertilizer_level === "Medium" && t("result.fertilizerModerate")}
-                  {fertilizer_level === "High" && t("result.fertilizerNeeded")}
-                </p>
-              </div>
-            </div>
-
+          <CardContent className="pt-3 pb-3 flex-1 flex flex-col">
             {/* NPK with recommended amounts */}
             {npk_values && (
-              <div className="bg-muted/30 p-3 rounded-lg">
+              <div className="bg-muted/30 p-3 rounded-lg mb-3">
                 <p className="font-semibold text-sm text-center mb-2">{t("result.npk")} - {language === "bn" ? "প্রতি একরে প্রয়োগ করুন" : "Apply per acre"}</p>
                 <div className="grid grid-cols-3 gap-2 text-center text-sm">
                   <div className="p-2 bg-leaf/20 rounded">
@@ -232,6 +207,31 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
                 </div>
               </div>
             )}
+
+            {/* Status indicator - pushed to bottom */}
+            <div className="flex items-center gap-3 mt-auto">
+              <div className={`p-2.5 rounded-lg ${
+                fertilizer_level === "Low" ? "bg-leaf/20 border border-leaf" :
+                fertilizer_level === "Medium" ? "bg-harvest/20 border border-harvest" :
+                "bg-destructive/20 border border-destructive"
+              }`}>
+                <Beaker className={`w-6 h-6 ${
+                  fertilizer_level === "Low" ? "text-leaf" :
+                  fertilizer_level === "Medium" ? "text-harvest" :
+                  "text-destructive"
+                }`} />
+              </div>
+              <div className="flex-1">
+                <Badge className={`${getFertilizerStyle()} shadow-sm text-sm px-3 py-1`}>
+                  {fertilizer_level === "Low" ? "🟢" : fertilizer_level === "Medium" ? "🟡" : "🔴"} {getFertilizerLabel()}
+                </Badge>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {fertilizer_level === "Low" && t("result.fertilizerMinimal")}
+                  {fertilizer_level === "Medium" && t("result.fertilizerModerate")}
+                  {fertilizer_level === "High" && t("result.fertilizerNeeded")}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
