@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Sprout, MapPin, Beaker, Loader2 } from "lucide-react";
+import { Sprout, MapPin, Beaker, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface InputFormProps {
@@ -19,19 +19,65 @@ export interface FormData {
   location: string;
 }
 
+interface CropVariety {
+  value: string;
+  category: string;
+  emoji: string;
+  minPH: number;
+  maxPH: number;
+}
+
+const cropVarieties: CropVariety[] = [
+  // Rice varieties
+  { value: "rice_miniket", category: "rice", emoji: "🌾", minPH: 6.0, maxPH: 6.8 },
+  { value: "rice_nazirshail", category: "rice", emoji: "🌾", minPH: 5.5, maxPH: 7.0 },
+  { value: "rice_paijam", category: "rice", emoji: "🌾", minPH: 5.5, maxPH: 6.5 },
+  
+  // Wheat varieties
+  { value: "wheat_sonalika", category: "wheat", emoji: "🌾", minPH: 6.0, maxPH: 7.5 },
+  { value: "wheat_kanchan", category: "wheat", emoji: "🌾", minPH: 6.0, maxPH: 7.5 },
+  { value: "wheat_balaka", category: "wheat", emoji: "🌾", minPH: 6.0, maxPH: 7.5 },
+  { value: "wheat_ananda", category: "wheat", emoji: "🌾", minPH: 6.0, maxPH: 7.5 },
+  { value: "wheat_akbar", category: "wheat", emoji: "🌾", minPH: 6.0, maxPH: 7.5 },
+  { value: "wheat_barkat", category: "wheat", emoji: "🌾", minPH: 6.0, maxPH: 7.5 },
+  { value: "wheat_aghrani", category: "wheat", emoji: "🌾", minPH: 6.0, maxPH: 7.5 },
+  
+  // Jute varieties
+  { value: "jute_white", category: "jute", emoji: "🌿", minPH: 6.5, maxPH: 7.5 },
+  { value: "jute_tossa", category: "jute", emoji: "🌿", minPH: 6.5, maxPH: 7.5 },
+  { value: "jute_mesta", category: "jute", emoji: "🌿", minPH: 6.5, maxPH: 7.5 },
+  
+  // Potato varieties
+  { value: "potato_diamant", category: "potato", emoji: "🥔", minPH: 5.5, maxPH: 6.5 },
+  { value: "potato_cardinal", category: "potato", emoji: "🥔", minPH: 5.5, maxPH: 6.5 },
+  { value: "potato_granola", category: "potato", emoji: "🥔", minPH: 5.5, maxPH: 6.5 },
+  
+  // Banana varieties
+  { value: "banana_sagor", category: "banana", emoji: "🍌", minPH: 6.5, maxPH: 7.5 },
+  { value: "banana_shabri", category: "banana", emoji: "🍌", minPH: 6.5, maxPH: 7.5 },
+  { value: "banana_champa", category: "banana", emoji: "🍌", minPH: 6.5, maxPH: 7.5 },
+];
+
 const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
   const { t } = useLanguage();
   const [cropType, setCropType] = useState("");
   const [soilPH, setSoilPH] = useState([6.5]);
   const [location, setLocation] = useState("Dhaka");
 
-  const crops = [
-    { value: "rice", emoji: "🌾" },
-    { value: "wheat", emoji: "🌾" },
-    { value: "maize", emoji: "🌽" },
-    { value: "jute", emoji: "🌿" },
-    { value: "potato", emoji: "🥔" },
-  ];
+  const selectedCrop = useMemo(() => 
+    cropVarieties.find(c => c.value === cropType), 
+    [cropType]
+  );
+
+  const phCompatibility = useMemo(() => {
+    if (!selectedCrop) return null;
+    const ph = soilPH[0];
+    const isCompatible = ph >= selectedCrop.minPH && ph <= selectedCrop.maxPH;
+    return {
+      isCompatible,
+      optimalRange: `${selectedCrop.minPH} - ${selectedCrop.maxPH}`,
+    };
+  }, [selectedCrop, soilPH]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +105,20 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
     return "OK";
   };
 
+  // Group crops by category
+  const groupedCrops = useMemo(() => {
+    const groups: Record<string, CropVariety[]> = {};
+    cropVarieties.forEach(crop => {
+      if (!groups[crop.category]) {
+        groups[crop.category] = [];
+      }
+      groups[crop.category].push(crop);
+    });
+    return groups;
+  }, []);
+
+  const categories = ["rice", "wheat", "jute", "potato", "banana"];
+
   return (
     <Card className="w-full max-w-2xl mx-auto border-4 border-leaf/30 shadow-card">
       <CardHeader className="text-center pb-4 bg-gradient-to-b from-leaf/10 to-transparent">
@@ -81,18 +141,53 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
               <SelectTrigger className="h-16 text-xl font-semibold border-2 border-leaf/30">
                 <SelectValue placeholder={`👆 ${t("form.selectCrop")}`} />
               </SelectTrigger>
-              <SelectContent className="bg-card">
-                {crops.map((crop) => (
-                  <SelectItem 
-                    key={crop.value} 
-                    value={crop.value} 
-                    className="text-xl py-4 cursor-pointer hover:bg-leaf/10"
-                  >
-                    {crop.emoji} {t(`crop.${crop.value}`)}
-                  </SelectItem>
+              <SelectContent className="bg-card max-h-80">
+                {categories.map((category) => (
+                  <div key={category}>
+                    <div className="px-3 py-2 text-sm font-bold text-muted-foreground uppercase tracking-wide bg-muted/50">
+                      {t(`crop.${category}`)}
+                    </div>
+                    {groupedCrops[category]?.map((crop) => (
+                      <SelectItem 
+                        key={crop.value} 
+                        value={crop.value} 
+                        className="text-lg py-3 cursor-pointer hover:bg-leaf/10"
+                      >
+                        {crop.emoji} {t(`variety.${crop.value}`)}
+                        <span className="text-xs text-muted-foreground ml-2">
+                          (pH {crop.minPH}-{crop.maxPH})
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </div>
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* pH Compatibility Indicator */}
+            {selectedCrop && phCompatibility && (
+              <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                phCompatibility.isCompatible 
+                  ? "bg-leaf/10 text-leaf" 
+                  : "bg-destructive/10 text-destructive"
+              }`}>
+                {phCompatibility.isCompatible ? (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">
+                      {t("form.phMatch")} ({t("form.optimal")}: {phCompatibility.optimalRange})
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-5 h-5" />
+                    <span className="font-medium">
+                      {t("form.phMismatch")} ({t("form.optimal")}: {phCompatibility.optimalRange})
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Step 2: Soil pH */}
