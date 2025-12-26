@@ -96,6 +96,35 @@ const translations: Record<Language, Record<string, string>> = {
     "result.defaultAdvice": "See fertilizer and irrigation advice above.",
     "result.goodHarvest": "Good harvest!",
     "result.ready": "Your recommendations are ready!",
+    "result.soilMoisture": "Soil Moisture",
+    
+    // Auth
+    "auth.loginTitle": "Login to your account",
+    "auth.signupTitle": "Create your account",
+    "auth.farmerName": "Farmer Name",
+    "auth.farmerNamePlaceholder": "Enter your name",
+    "auth.email": "Email",
+    "auth.emailPlaceholder": "Enter email",
+    "auth.password": "Password",
+    "auth.passwordPlaceholder": "Enter password",
+    "auth.login": "Login",
+    "auth.signup": "Sign Up",
+    "auth.noAccount": "Don't have an account? Sign up",
+    "auth.hasAccount": "Already have an account? Login",
+    "auth.loginSuccess": "Welcome back!",
+    "auth.signupSuccess": "Account created!",
+    "auth.invalidCredentials": "Invalid email or password",
+    "auth.alreadyRegistered": "Email already registered",
+    "auth.nameRequired": "Please enter your name",
+    "auth.logout": "Logout",
+    
+    // History
+    "history.title": "Recommendation History",
+    "history.empty": "No recommendations yet",
+    "history.getFirst": "Get Your First Recommendation",
+    "history.deleted": "Recommendation deleted",
+    "history.viewHistory": "View History",
+    "history.saved": "Recommendation saved!",
     
     // Language modal
     "lang.choose": "Choose Your Language",
@@ -196,6 +225,35 @@ const translations: Record<Language, Record<string, string>> = {
     "result.defaultAdvice": "আপনার ফসলের জন্য সার ও সেচের পরামর্শ উপরে দেখুন।",
     "result.goodHarvest": "ভালো ফসল হোক!",
     "result.ready": "আপনার পরামর্শ তৈরি!",
+    "result.soilMoisture": "মাটির আর্দ্রতা",
+    
+    // Auth
+    "auth.loginTitle": "আপনার অ্যাকাউন্টে লগইন করুন",
+    "auth.signupTitle": "নতুন অ্যাকাউন্ট তৈরি করুন",
+    "auth.farmerName": "কৃষকের নাম",
+    "auth.farmerNamePlaceholder": "আপনার নাম লিখুন",
+    "auth.email": "ইমেইল",
+    "auth.emailPlaceholder": "ইমেইল লিখুন",
+    "auth.password": "পাসওয়ার্ড",
+    "auth.passwordPlaceholder": "পাসওয়ার্ড লিখুন",
+    "auth.login": "লগইন",
+    "auth.signup": "সাইন আপ",
+    "auth.noAccount": "অ্যাকাউন্ট নেই? সাইন আপ করুন",
+    "auth.hasAccount": "অ্যাকাউন্ট আছে? লগইন করুন",
+    "auth.loginSuccess": "স্বাগতম!",
+    "auth.signupSuccess": "অ্যাকাউন্ট তৈরি হয়েছে!",
+    "auth.invalidCredentials": "ভুল ইমেইল বা পাসওয়ার্ড",
+    "auth.alreadyRegistered": "ইমেইল আগে থেকেই নিবন্ধিত",
+    "auth.nameRequired": "আপনার নাম লিখুন",
+    "auth.logout": "লগআউট",
+    
+    // History
+    "history.title": "পরামর্শের ইতিহাস",
+    "history.empty": "এখনো কোনো পরামর্শ নেই",
+    "history.getFirst": "প্রথম পরামর্শ নিন",
+    "history.deleted": "পরামর্শ মুছে ফেলা হয়েছে",
+    "history.viewHistory": "ইতিহাস দেখুন",
+    "history.saved": "পরামর্শ সংরক্ষিত!",
     
     // Language modal
     "lang.choose": "ভাষা বাছাই করুন",

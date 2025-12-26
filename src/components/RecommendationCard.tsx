@@ -17,9 +17,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface RecommendationCardProps {
   recommendation: PredictionResponse;
   cropType: string;
+  location?: string;
 }
 
-const RecommendationCard = ({ recommendation, cropType }: RecommendationCardProps) => {
+const RecommendationCard = ({ recommendation, cropType, location: propLocation }: RecommendationCardProps) => {
   const { t } = useLanguage();
   
   const { 
@@ -28,8 +29,10 @@ const RecommendationCard = ({ recommendation, cropType }: RecommendationCardProp
     recommendations_text, 
     npk_values, 
     weather_data,
-    location
+    location: apiLocation
   } = recommendation;
+
+  const displayLocation = propLocation || apiLocation || "Unknown";
 
   const getFertilizerStyle = () => {
     switch (fertilizer_level) {
@@ -76,11 +79,11 @@ const RecommendationCard = ({ recommendation, cropType }: RecommendationCardProp
         <CardHeader className="pb-2 bg-gradient-to-r from-water/20 to-water/5">
           <CardTitle className="flex items-center gap-2 text-xl">
             <CloudRain className="w-6 h-6 text-water" />
-            📍 {location} - {t("result.weather")}
+            📍 {displayLocation} - {t("result.weather")}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div className="p-4 bg-harvest/10 rounded-xl">
               <ThermometerSun className="w-10 h-10 mx-auto text-harvest mb-2" />
               <p className="text-3xl font-black text-harvest">{weather_data?.temperature ?? 0}°C</p>
@@ -95,6 +98,11 @@ const RecommendationCard = ({ recommendation, cropType }: RecommendationCardProp
               <Wind className="w-10 h-10 mx-auto text-leaf mb-2" />
               <p className="text-3xl font-black text-leaf">{weather_data?.humidity ?? 0}%</p>
               <p className="text-sm text-muted-foreground">{t("result.humidity")}</p>
+            </div>
+            <div className="p-4 bg-primary/10 rounded-xl">
+              <Droplets className="w-10 h-10 mx-auto text-primary mb-2" />
+              <p className="text-3xl font-black text-primary">{weather_data?.soil_moisture ?? 0}%</p>
+              <p className="text-sm text-muted-foreground">{t("result.soilMoisture")}</p>
             </div>
           </div>
           {weather_data?.weather && (
