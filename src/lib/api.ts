@@ -12,24 +12,29 @@ export interface WeatherData {
   temperature: number;
   rainfall: number;
   humidity: number;
-  description: string;
+  weather: string;
+  soil_moisture?: number;
 }
 
 export interface PredictionResponse {
-  crop_type: string;
-  soil_ph: number;
-  location: string;
+  id?: number;
+  crop_type?: string;
+  soil_ph?: number;
+  location?: string;
   farmer_name?: string;
-  weather: WeatherData;
+  weather_data: WeatherData;
   fertilizer_level: "Low" | "Medium" | "High";
   irrigation_needed: boolean;
-  recommendations: string;
-  npk_values: {
+  recommendations_text: string;
+  confidence?: number;
+  npk_values?: {
     nitrogen: string;
     phosphorus: string;
     potassium: string;
   };
-  timestamp: string;
+  farmer_input_id?: number;
+  message?: string;
+  timestamp?: string;
 }
 
 export async function getPrediction(data: PredictionRequest): Promise<PredictionResponse> {
