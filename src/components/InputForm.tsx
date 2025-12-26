@@ -58,15 +58,29 @@ const cropVarieties: CropVariety[] = [
   { value: "banana_champa", category: "banana", emoji: "🍌", minPH: 6.5, maxPH: 7.5 },
 ];
 
+const categories = [
+  { value: "rice", emoji: "🌾" },
+  { value: "wheat", emoji: "🌾" },
+  { value: "jute", emoji: "🌿" },
+  { value: "potato", emoji: "🥔" },
+  { value: "banana", emoji: "🍌" },
+];
+
 const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
   const { t } = useLanguage();
-  const [cropType, setCropType] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedVariety, setSelectedVariety] = useState("");
   const [soilPH, setSoilPH] = useState([6.5]);
   const [location, setLocation] = useState("Dhaka");
 
+  const varietiesForCategory = useMemo(() => 
+    cropVarieties.filter(c => c.category === selectedCategory), 
+    [selectedCategory]
+  );
+
   const selectedCrop = useMemo(() => 
-    cropVarieties.find(c => c.value === cropType), 
-    [cropType]
+    cropVarieties.find(c => c.value === selectedVariety), 
+    [selectedVariety]
   );
 
   const phCompatibility = useMemo(() => {
@@ -79,12 +93,17 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
     };
   }, [selectedCrop, soilPH]);
 
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedVariety(""); // Reset variety when category changes
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cropType) return;
+    if (!selectedVariety) return;
     
     onSubmit({
-      cropType,
+      cropType: selectedVariety,
       soilPH: soilPH[0],
       location: location || "Dhaka",
     });
@@ -105,20 +124,6 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
     return "OK";
   };
 
-  // Group crops by category
-  const groupedCrops = useMemo(() => {
-    const groups: Record<string, CropVariety[]> = {};
-    cropVarieties.forEach(crop => {
-      if (!groups[crop.category]) {
-        groups[crop.category] = [];
-      }
-      groups[crop.category].push(crop);
-    });
-    return groups;
-  }, []);
-
-  const categories = ["rice", "wheat", "jute", "potato", "banana"];
-
   return (
     <Card className="w-full max-w-2xl mx-auto border-4 border-leaf/30 shadow-card">
       <CardHeader className="text-center pb-4 bg-gradient-to-b from-leaf/10 to-transparent">
@@ -131,42 +136,59 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
         <form onSubmit={handleSubmit} className="space-y-8">
           
           {/* Step 1: Crop Selection */}
-          <div className="space-y-3 p-4 bg-leaf/5 rounded-xl border-2 border-leaf/20">
+          <div className="space-y-4 p-4 bg-leaf/5 rounded-xl border-2 border-leaf/20">
             <Label htmlFor="crop" className="flex items-center gap-2 text-xl font-bold text-leaf">
               <span className="text-3xl">1️⃣</span>
               <Sprout className="w-6 h-6" />
               {t("form.step1")}
             </Label>
-            <Select value={cropType} onValueChange={setCropType}>
+            
+            {/* Category Selection */}
+            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
               <SelectTrigger className="h-16 text-xl font-semibold border-2 border-leaf/30">
                 <SelectValue placeholder={`👆 ${t("form.selectCrop")}`} />
               </SelectTrigger>
-              <SelectContent className="bg-card max-h-80">
-                {categories.map((category) => (
-                  <div key={category}>
-                    <div className="px-3 py-2 text-sm font-bold text-muted-foreground uppercase tracking-wide bg-muted/50">
-                      {t(`crop.${category}`)}
-                    </div>
-                    {groupedCrops[category]?.map((crop) => (
-                      <SelectItem 
-                        key={crop.value} 
-                        value={crop.value} 
-                        className="text-lg py-3 cursor-pointer hover:bg-leaf/10"
-                      >
-                        {crop.emoji} {t(`variety.${crop.value}`)}
-                        <span className="text-xs text-muted-foreground ml-2">
-                          (pH {crop.minPH}-{crop.maxPH})
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </div>
+              <SelectContent className="bg-card">
+                {categories.map((cat) => (
+                  <SelectItem 
+                    key={cat.value} 
+                    value={cat.value} 
+                    className="text-xl py-4 cursor-pointer hover:bg-leaf/10"
+                  >
+                    {cat.emoji} {t(`crop.${cat.value}`)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Variety Selection - Only shows after category is selected */}
+            {selectedCategory && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  {t("form.selectVariety")}
+                </Label>
+                <Select value={selectedVariety} onValueChange={setSelectedVariety}>
+                  <SelectTrigger className="h-14 text-lg font-semibold border-2 border-leaf/20">
+                    <SelectValue placeholder={`👆 ${t("form.chooseVariety")}`} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card">
+                    {varietiesForCategory.map((variety) => (
+                      <SelectItem 
+                        key={variety.value} 
+                        value={variety.value} 
+                        className="text-lg py-3 cursor-pointer hover:bg-leaf/10"
+                      >
+                        {variety.emoji} {t(`variety.${variety.value}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             
             {/* pH Compatibility Indicator */}
             {selectedCrop && phCompatibility && (
-              <div className={`flex items-center gap-2 p-3 rounded-lg ${
+              <div className={`flex items-center gap-2 p-3 rounded-lg animate-in fade-in duration-300 ${
                 phCompatibility.isCompatible 
                   ? "bg-leaf/10 text-leaf" 
                   : "bg-destructive/10 text-destructive"
@@ -250,7 +272,7 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
             variant="hero" 
             size="xl" 
             className="w-full h-20 text-2xl font-bold shadow-lg hover:shadow-xl transition-all"
-            disabled={!cropType || isLoading}
+            disabled={!selectedVariety || isLoading}
           >
             {isLoading ? (
               <span className="flex items-center gap-3">
@@ -265,7 +287,7 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
             )}
           </Button>
 
-          {!cropType && (
+          {!selectedVariety && (
             <p className="text-center text-destructive font-medium animate-pulse">
               ⚠️ {t("form.selectFirst")}
             </p>
