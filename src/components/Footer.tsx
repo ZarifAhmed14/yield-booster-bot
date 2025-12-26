@@ -1,6 +1,9 @@
 import { Leaf } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Footer = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="border-t border-border/50 bg-muted/30 py-8 mt-auto">
       <div className="container">
@@ -13,7 +16,7 @@ const Footer = () => {
           </div>
           
           <p className="text-sm text-muted-foreground text-center">
-            AI-powered recommendations for sustainable farming in Bangladesh
+            {t("footer.powered")}
           </p>
           
           <p className="text-xs text-muted-foreground">
