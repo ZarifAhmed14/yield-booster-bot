@@ -175,33 +175,37 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 text-center">
-            <Badge className={`${getFertilizerStyle()} shadow-lg`}>
-              {fertilizer_level === "Low" && "🟢"}
-              {fertilizer_level === "Medium" && "🟡"}
-              {fertilizer_level === "High" && "🔴"}
-              {" "}{getFertilizerLabel()}
-            </Badge>
+            {fertilizer_level === "Low" ? (
+              <div className="p-6 bg-leaf/20 rounded-2xl border-4 border-leaf mb-4">
+                <Beaker className="w-16 h-16 mx-auto text-leaf mb-3" />
+                <Badge className={`${getFertilizerStyle()} shadow-lg`}>
+                  🟢 {getFertilizerLabel()}
+                </Badge>
+              </div>
+            ) : fertilizer_level === "Medium" ? (
+              <div className="p-6 bg-harvest/20 rounded-2xl border-4 border-harvest mb-4">
+                <Beaker className="w-16 h-16 mx-auto text-harvest mb-3" />
+                <Badge className={`${getFertilizerStyle()} shadow-lg`}>
+                  🟡 {getFertilizerLabel()}
+                </Badge>
+              </div>
+            ) : (
+              <div className="p-6 bg-destructive/20 rounded-2xl border-4 border-destructive mb-4">
+                <Beaker className="w-16 h-16 mx-auto text-destructive mb-3" />
+                <Badge className={`${getFertilizerStyle()} shadow-lg`}>
+                  🔴 {getFertilizerLabel()}
+                </Badge>
+              </div>
+            )}
             
-            <div className="flex gap-2 my-6 justify-center">
-              {[1, 2, 3].map((bar) => (
-                <div
-                  key={bar}
-                  className={`h-12 w-16 rounded-lg transition-all duration-500 ${
-                    bar <= (fertilizer_level === "Low" ? 1 : fertilizer_level === "Medium" ? 2 : 3)
-                      ? fertilizer_level === "Low"
-                        ? "bg-leaf animate-grow"
-                        : fertilizer_level === "Medium"
-                        ? "bg-harvest animate-grow"
-                        : "bg-destructive animate-grow"
-                      : "bg-muted"
-                  }`}
-                  style={{ animationDelay: `${bar * 0.15}s` }}
-                />
-              ))}
-            </div>
+            <p className="text-lg text-muted-foreground">
+              {fertilizer_level === "Low" && t("result.fertilizerMinimal")}
+              {fertilizer_level === "Medium" && t("result.fertilizerModerate")}
+              {fertilizer_level === "High" && t("result.fertilizerNeeded")}
+            </p>
 
             {npk_values && (
-              <div className="space-y-2 text-left bg-muted/30 p-4 rounded-lg">
+              <div className="space-y-2 text-left bg-muted/30 p-4 rounded-lg mt-4">
                 <p className="font-semibold text-center mb-3">{t("result.npk")}</p>
                 <div className="grid grid-cols-3 gap-2 text-center text-sm">
                   <div className="p-2 bg-leaf/20 rounded">
