@@ -174,25 +174,25 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
               🧪 {t("result.fertilizer")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 pb-4">
-            {/* Compact status indicator */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`p-3 rounded-xl ${
-                fertilizer_level === "Low" ? "bg-leaf/20 border-2 border-leaf" :
-                fertilizer_level === "Medium" ? "bg-harvest/20 border-2 border-harvest" :
-                "bg-destructive/20 border-2 border-destructive"
+          <CardContent className="pt-3 pb-3 space-y-3">
+            {/* Status indicator */}
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-lg ${
+                fertilizer_level === "Low" ? "bg-leaf/20 border border-leaf" :
+                fertilizer_level === "Medium" ? "bg-harvest/20 border border-harvest" :
+                "bg-destructive/20 border border-destructive"
               }`}>
-                <Beaker className={`w-8 h-8 ${
+                <Beaker className={`w-6 h-6 ${
                   fertilizer_level === "Low" ? "text-leaf" :
                   fertilizer_level === "Medium" ? "text-harvest" :
                   "text-destructive"
                 }`} />
               </div>
-              <div>
-                <Badge className={`${getFertilizerStyle()} shadow-lg text-base px-4 py-1.5`}>
+              <div className="flex-1">
+                <Badge className={`${getFertilizerStyle()} shadow-sm text-sm px-3 py-1`}>
                   {fertilizer_level === "Low" ? "🟢" : fertilizer_level === "Medium" ? "🟡" : "🔴"} {getFertilizerLabel()}
                 </Badge>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {fertilizer_level === "Low" && t("result.fertilizerMinimal")}
                   {fertilizer_level === "Medium" && t("result.fertilizerModerate")}
                   {fertilizer_level === "High" && t("result.fertilizerNeeded")}
@@ -243,27 +243,27 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
               💧 {t("result.irrigation")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 pb-4">
-            {/* Compact status indicator */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`p-3 rounded-xl ${
-                irrigation_needed ? "bg-water/20 border-2 border-water" : "bg-leaf/20 border-2 border-leaf"
+          <CardContent className="pt-3 pb-3 space-y-3">
+            {/* Status indicator */}
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-lg ${
+                irrigation_needed ? "bg-water/20 border border-water" : "bg-leaf/20 border border-leaf"
               }`}>
                 {irrigation_needed ? (
-                  <AlertTriangle className="w-8 h-8 text-water" />
+                  <AlertTriangle className="w-6 h-6 text-water" />
                 ) : (
-                  <CheckCircle2 className="w-8 h-8 text-leaf" />
+                  <CheckCircle2 className="w-6 h-6 text-leaf" />
                 )}
               </div>
-              <div>
+              <div className="flex-1">
                 <Badge className={`${
                   irrigation_needed 
                     ? "bg-water text-primary-foreground" 
                     : "bg-leaf text-primary-foreground"
-                } shadow-lg text-base px-4 py-1.5`}>
+                } shadow-sm text-sm px-3 py-1`}>
                   {irrigation_needed ? "🔵 " + t("result.waterNeeded") : "🟢 " + t("result.noWater")}
                 </Badge>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {irrigation_needed ? t("result.waterYour") : t("result.enoughMoisture")}
                 </p>
               </div>
