@@ -151,7 +151,7 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
             {/* Category Selection */}
             <Select value={selectedCategory} onValueChange={handleCategoryChange}>
               <SelectTrigger className="h-16 text-xl font-semibold border-2 border-leaf/30">
-                <SelectValue placeholder={`👆 ${t("form.selectCrop")}`} />
+                <SelectValue placeholder={`👉 ${t("form.selectCrop")}`} />
               </SelectTrigger>
               <SelectContent className="bg-card">
                 {categories.map((cat) => (
@@ -174,7 +174,7 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
                 </Label>
                 <Select value={selectedVariety} onValueChange={setSelectedVariety}>
                   <SelectTrigger className="h-14 text-lg font-semibold border-2 border-leaf/20">
-                    <SelectValue placeholder={`👆 ${t("form.chooseVariety")}`} />
+                    <SelectValue placeholder={`👉 ${t("form.chooseVariety")}`} />
                   </SelectTrigger>
                   <SelectContent className="bg-card">
                     {varietiesForCategory.map((variety) => (
