@@ -22,7 +22,7 @@ serve(async (req) => {
       ? "Respond in Bengali (বাংলা) language only." 
       : "Respond in English only.";
 
-    const systemPrompt = `You are an expert agricultural advisor for farmers in Bangladesh. ${languageInstruction} Give practical, actionable farming advice in 3-4 sentences. Be warm and encouraging. Focus on immediate actions the farmer should take.`;
+    const systemPrompt = `You are an expert agricultural advisor for farmers in Bangladesh. ${languageInstruction} Give practical, actionable farming advice in 3-4 sentences. Be professional and encouraging. Focus on immediate actions the farmer should take. IMPORTANT: Do NOT use any religious greetings or phrases like Namaste, Assalamualaikum, Bismillah, or any other religious words. Keep the advice purely agricultural and secular.`;
 
     const userPrompt = `
 Crop: ${cropType} (variety: ${variety})
