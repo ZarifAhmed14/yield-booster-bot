@@ -6,7 +6,6 @@ export interface PredictionRequest {
   crop_type: string;
   soil_ph: number;
   location: string;
-  farmer_name?: string;
 }
 
 export interface WeatherData {
