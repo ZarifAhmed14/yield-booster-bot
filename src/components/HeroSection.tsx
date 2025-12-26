@@ -16,7 +16,7 @@ const HeroSection = () => {
           className="bg-card/80 backdrop-blur-sm border-leaf/30 hover:border-leaf hover:bg-leaf/10"
         >
           <Globe className="w-4 h-4 mr-2" />
-          {language === "bn" ? "ভাষা" : "Language"}
+          {language === "bn" ? "বাংলা" : "English"}
         </Button>
       </div>
 
