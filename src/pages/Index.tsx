@@ -4,23 +4,12 @@ import HeroSection from "@/components/HeroSection";
 import InputForm, { FormData } from "@/components/InputForm";
 import RecommendationCard from "@/components/RecommendationCard";
 import Footer from "@/components/Footer";
-import { getRecommendation } from "@/lib/recommendations";
+import { getPrediction, PredictionResponse } from "@/lib/api";
 import { toast } from "sonner";
-
-interface Recommendation {
-  fertilizerLevel: "Low" | "Medium" | "High";
-  irrigationAdvice: "Irrigate" | "No irrigation needed";
-  explanation: string;
-  details: {
-    nitrogen: string;
-    phosphorus: string;
-    potassium: string;
-  };
-}
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
+  const [recommendation, setRecommendation] = useState<PredictionResponse | null>(null);
   const [currentCrop, setCurrentCrop] = useState("");
 
   const handleSubmit = async (data: FormData) => {
@@ -28,13 +17,23 @@ const Index = () => {
     setRecommendation(null);
     
     try {
-      const result = await getRecommendation(data);
+      const result = await getPrediction({
+        crop_type: data.cropType,
+        soil_ph: data.soilPH,
+        location: data.location,
+        farmer_name: data.farmerName || undefined,
+      });
+      
       setRecommendation(result);
       setCurrentCrop(data.cropType);
-      toast.success("Recommendations generated successfully!");
+      toast.success("পরামর্শ তৈরি হয়েছে! ✓", {
+        description: "Recommendations generated successfully!",
+      });
     } catch (error) {
-      toast.error("Failed to generate recommendations. Please try again.");
-      console.error(error);
+      console.error("API Error:", error);
+      toast.error("সমস্যা হয়েছে!", {
+        description: "Could not connect to server. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }
