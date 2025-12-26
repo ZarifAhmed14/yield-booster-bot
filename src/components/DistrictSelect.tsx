@@ -33,9 +33,7 @@ const DistrictSelect = ({ value, onChange }: DistrictSelectProps) => {
   );
 
   const getDisplayName = (district: typeof bangladeshDistricts[0]) => {
-    return language === "bn" 
-      ? `${district.bn} (${district.en})` 
-      : `${district.en} (${district.bn})`;
+    return language === "bn" ? district.bn : district.en;
   };
 
   return (
