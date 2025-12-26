@@ -25,9 +25,9 @@ const RecommendationCard = ({ recommendation, cropType }: RecommendationCardProp
   const { 
     fertilizer_level, 
     irrigation_needed, 
-    recommendations, 
+    recommendations_text, 
     npk_values, 
-    weather,
+    weather_data,
     location
   } = recommendation;
 
@@ -83,23 +83,23 @@ const RecommendationCard = ({ recommendation, cropType }: RecommendationCardProp
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="p-4 bg-harvest/10 rounded-xl">
               <ThermometerSun className="w-10 h-10 mx-auto text-harvest mb-2" />
-              <p className="text-3xl font-black text-harvest">{weather?.temperature || 28}°C</p>
+              <p className="text-3xl font-black text-harvest">{weather_data?.temperature ?? 0}°C</p>
               <p className="text-sm text-muted-foreground">{t("result.temperature")}</p>
             </div>
             <div className="p-4 bg-water/10 rounded-xl">
               <CloudRain className="w-10 h-10 mx-auto text-water mb-2" />
-              <p className="text-3xl font-black text-water">{weather?.rainfall || 0} mm</p>
+              <p className="text-3xl font-black text-water">{weather_data?.rainfall ?? 0} mm</p>
               <p className="text-sm text-muted-foreground">{t("result.rainfall")}</p>
             </div>
             <div className="p-4 bg-leaf/10 rounded-xl">
               <Wind className="w-10 h-10 mx-auto text-leaf mb-2" />
-              <p className="text-3xl font-black text-leaf">{weather?.humidity || 70}%</p>
+              <p className="text-3xl font-black text-leaf">{weather_data?.humidity ?? 0}%</p>
               <p className="text-sm text-muted-foreground">{t("result.humidity")}</p>
             </div>
           </div>
-          {weather?.description && (
+          {weather_data?.weather && (
             <p className="text-center mt-4 text-lg italic text-muted-foreground">
-              ☁️ {weather.description}
+              ☁️ {weather_data.weather}
             </p>
           )}
         </CardContent>
@@ -230,7 +230,7 @@ const RecommendationCard = ({ recommendation, cropType }: RecommendationCardProp
         <CardContent className="pt-4">
           <div className="p-4 bg-muted/30 rounded-xl">
             <p className="text-lg leading-relaxed whitespace-pre-line">
-              {recommendations || t("result.defaultAdvice")}
+              {recommendations_text || t("result.defaultAdvice")}
             </p>
           </div>
           <div className="mt-4 text-center text-sm text-muted-foreground">
