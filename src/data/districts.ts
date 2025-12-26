@@ -1,0 +1,89 @@
+// All 64 districts of Bangladesh with English and Bangla names
+export interface District {
+  value: string;
+  en: string;
+  bn: string;
+}
+
+export const bangladeshDistricts: District[] = [
+  // Barishal Division
+  { value: "barguna", en: "Barguna", bn: "বরগুনা" },
+  { value: "barishal", en: "Barishal", bn: "বরিশাল" },
+  { value: "bhola", en: "Bhola", bn: "ভোলা" },
+  { value: "jhalokati", en: "Jhalokati", bn: "ঝালকাঠি" },
+  { value: "patuakhali", en: "Patuakhali", bn: "পটুয়াখালী" },
+  { value: "pirojpur", en: "Pirojpur", bn: "পিরোজপুর" },
+  
+  // Chattogram Division
+  { value: "bandarban", en: "Bandarban", bn: "বান্দরবান" },
+  { value: "brahmanbaria", en: "Brahmanbaria", bn: "ব্রাহ্মণবাড়িয়া" },
+  { value: "chandpur", en: "Chandpur", bn: "চাঁদপুর" },
+  { value: "chattogram", en: "Chattogram", bn: "চট্টগ্রাম" },
+  { value: "comilla", en: "Comilla", bn: "কুমিল্লা" },
+  { value: "coxsbazar", en: "Cox's Bazar", bn: "কক্সবাজার" },
+  { value: "feni", en: "Feni", bn: "ফেনী" },
+  { value: "khagrachhari", en: "Khagrachhari", bn: "খাগড়াছড়ি" },
+  { value: "lakshmipur", en: "Lakshmipur", bn: "লক্ষ্মীপুর" },
+  { value: "noakhali", en: "Noakhali", bn: "নোয়াখালী" },
+  { value: "rangamati", en: "Rangamati", bn: "রাঙামাটি" },
+  
+  // Dhaka Division
+  { value: "dhaka", en: "Dhaka", bn: "ঢাকা" },
+  { value: "faridpur", en: "Faridpur", bn: "ফরিদপুর" },
+  { value: "gazipur", en: "Gazipur", bn: "গাজীপুর" },
+  { value: "gopalganj", en: "Gopalganj", bn: "গোপালগঞ্জ" },
+  { value: "kishoreganj", en: "Kishoreganj", bn: "কিশোরগঞ্জ" },
+  { value: "madaripur", en: "Madaripur", bn: "মাদারীপুর" },
+  { value: "manikganj", en: "Manikganj", bn: "মানিকগঞ্জ" },
+  { value: "munshiganj", en: "Munshiganj", bn: "মুন্সীগঞ্জ" },
+  { value: "narayanganj", en: "Narayanganj", bn: "নারায়ণগঞ্জ" },
+  { value: "narsingdi", en: "Narsingdi", bn: "নরসিংদী" },
+  { value: "rajbari", en: "Rajbari", bn: "রাজবাড়ী" },
+  { value: "shariatpur", en: "Shariatpur", bn: "শরীয়তপুর" },
+  { value: "tangail", en: "Tangail", bn: "টাঙ্গাইল" },
+  
+  // Khulna Division
+  { value: "bagerhat", en: "Bagerhat", bn: "বাগেরহাট" },
+  { value: "chuadanga", en: "Chuadanga", bn: "চুয়াডাঙ্গা" },
+  { value: "jessore", en: "Jessore", bn: "যশোর" },
+  { value: "jhenaidah", en: "Jhenaidah", bn: "ঝিনাইদহ" },
+  { value: "khulna", en: "Khulna", bn: "খুলনা" },
+  { value: "kushtia", en: "Kushtia", bn: "কুষ্টিয়া" },
+  { value: "magura", en: "Magura", bn: "মাগুরা" },
+  { value: "meherpur", en: "Meherpur", bn: "মেহেরপুর" },
+  { value: "narail", en: "Narail", bn: "নড়াইল" },
+  { value: "satkhira", en: "Satkhira", bn: "সাতক্ষীরা" },
+  
+  // Mymensingh Division
+  { value: "jamalpur", en: "Jamalpur", bn: "জামালপুর" },
+  { value: "mymensingh", en: "Mymensingh", bn: "ময়মনসিংহ" },
+  { value: "netrokona", en: "Netrokona", bn: "নেত্রকোণা" },
+  { value: "sherpur", en: "Sherpur", bn: "শেরপুর" },
+  
+  // Rajshahi Division
+  { value: "bogura", en: "Bogura", bn: "বগুড়া" },
+  { value: "chapainawabganj", en: "Chapainawabganj", bn: "চাঁপাইনবাবগঞ্জ" },
+  { value: "joypurhat", en: "Joypurhat", bn: "জয়পুরহাট" },
+  { value: "naogaon", en: "Naogaon", bn: "নওগাঁ" },
+  { value: "natore", en: "Natore", bn: "নাটোর" },
+  { value: "nawabganj", en: "Nawabganj", bn: "নবাবগঞ্জ" },
+  { value: "pabna", en: "Pabna", bn: "পাবনা" },
+  { value: "rajshahi", en: "Rajshahi", bn: "রাজশাহী" },
+  { value: "sirajganj", en: "Sirajganj", bn: "সিরাজগঞ্জ" },
+  
+  // Rangpur Division
+  { value: "dinajpur", en: "Dinajpur", bn: "দিনাজপুর" },
+  { value: "gaibandha", en: "Gaibandha", bn: "গাইবান্ধা" },
+  { value: "kurigram", en: "Kurigram", bn: "কুড়িগ্রাম" },
+  { value: "lalmonirhat", en: "Lalmonirhat", bn: "লালমনিরহাট" },
+  { value: "nilphamari", en: "Nilphamari", bn: "নীলফামারী" },
+  { value: "panchagarh", en: "Panchagarh", bn: "পঞ্চগড়" },
+  { value: "rangpur", en: "Rangpur", bn: "রংপুর" },
+  { value: "thakurgaon", en: "Thakurgaon", bn: "ঠাকুরগাঁও" },
+  
+  // Sylhet Division
+  { value: "habiganj", en: "Habiganj", bn: "হবিগঞ্জ" },
+  { value: "moulvibazar", en: "Moulvibazar", bn: "মৌলভীবাজার" },
+  { value: "sunamganj", en: "Sunamganj", bn: "সুনামগঞ্জ" },
+  { value: "sylhet", en: "Sylhet", bn: "সিলেট" },
+];

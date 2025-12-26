@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Sprout, Mail, Lock, User } from "lucide-react";
 import { z } from "zod";
+import LanguageModal from "@/components/LanguageModal";
 
 const emailSchema = z.string().email("Invalid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -82,6 +83,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-leaf/10 via-background to-water/10 p-4">
+      <LanguageModal />
       <Card className="w-full max-w-md border-4 border-leaf/30">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-leaf/20 rounded-full flex items-center justify-center">
