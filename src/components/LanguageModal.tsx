@@ -31,9 +31,8 @@ const LanguageModal = () => {
               variant="outline"
               size="lg"
               onClick={() => setLanguage("en")}
-              className="h-20 text-xl border-2 hover:border-leaf hover:bg-leaf/10 transition-all"
+              className="h-20 text-2xl border-2 hover:border-leaf hover:bg-leaf/10 transition-all"
             >
-              <span className="text-3xl mr-3">🇬🇧</span>
               English
             </Button>
             
@@ -41,10 +40,9 @@ const LanguageModal = () => {
               variant="outline"
               size="lg"
               onClick={() => setLanguage("bn")}
-              className="h-20 text-xl border-2 hover:border-leaf hover:bg-leaf/10 transition-all"
+              className="h-20 text-2xl border-2 hover:border-leaf hover:bg-leaf/10 transition-all"
             >
-              <span className="text-3xl mr-3">🇧🇩</span>
-              বাংলা (Bangla)
+              বাংলা
             </Button>
           </div>
         </div>
