@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import HeroSection from "@/components/HeroSection";
-import Dashboard from "@/components/Dashboard";
 import InputForm, { FormData } from "@/components/InputForm";
 import RecommendationCard from "@/components/RecommendationCard";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
@@ -138,8 +137,7 @@ const Index = () => {
           )}
         </div>
 
-        {/* Show Dashboard for logged-in users, Hero for guests */}
-        {user ? <Dashboard /> : <HeroSection />}
+        <HeroSection />
         
         <main className="flex-1 container py-12 space-y-12">
           <InputForm onSubmit={handleSubmit} isLoading={isLoading} />
