@@ -14,7 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          farmer_name: string | null
+          id: string
+          location: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          farmer_name?: string | null
+          id?: string
+          location?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          farmer_name?: string | null
+          id?: string
+          location?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recommendations_history: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          crop_type: string
+          fertilizer_level: string
+          id: string
+          irrigation_needed: boolean
+          location: string
+          recommendations_text: string | null
+          soil_moisture: number | null
+          soil_ph: number
+          user_id: string
+          weather_humidity: number | null
+          weather_rainfall: number | null
+          weather_temperature: number | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          crop_type: string
+          fertilizer_level: string
+          id?: string
+          irrigation_needed: boolean
+          location: string
+          recommendations_text?: string | null
+          soil_moisture?: number | null
+          soil_ph: number
+          user_id: string
+          weather_humidity?: number | null
+          weather_rainfall?: number | null
+          weather_temperature?: number | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          crop_type?: string
+          fertilizer_level?: string
+          id?: string
+          irrigation_needed?: boolean
+          location?: string
+          recommendations_text?: string | null
+          soil_moisture?: number | null
+          soil_ph?: number
+          user_id?: string
+          weather_humidity?: number | null
+          weather_rainfall?: number | null
+          weather_temperature?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
