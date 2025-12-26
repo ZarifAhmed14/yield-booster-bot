@@ -84,13 +84,13 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
   const getFertilizerStyle = () => {
     switch (fertilizer_level) {
       case "Low":
-        return "bg-leaf text-primary-foreground text-2xl px-6 py-3";
+        return "bg-leaf text-primary-foreground";
       case "Medium":
-        return "bg-harvest text-foreground text-2xl px-6 py-3";
+        return "bg-harvest text-foreground";
       case "High":
-        return "bg-destructive text-destructive-foreground text-2xl px-6 py-3";
+        return "bg-destructive text-destructive-foreground";
       default:
-        return "bg-muted text-2xl px-6 py-3";
+        return "bg-muted";
     }
   };
 
@@ -167,58 +167,67 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
       <div className="grid md:grid-cols-2 gap-4">
         
         {/* Fertilizer Card */}
-        <Card className="border-4 border-leaf/30 overflow-hidden">
-          <CardHeader className="pb-2 bg-gradient-to-r from-leaf/20 to-leaf/5">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Beaker className="w-6 h-6 text-leaf" />
+        <Card className="border-2 border-leaf/30 overflow-hidden">
+          <CardHeader className="py-3 bg-gradient-to-r from-leaf/20 to-leaf/5">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Beaker className="w-5 h-5 text-leaf" />
               🧪 {t("result.fertilizer")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 text-center">
-            {fertilizer_level === "Low" ? (
-              <div className="p-6 bg-leaf/20 rounded-2xl border-4 border-leaf mb-4">
-                <Beaker className="w-16 h-16 mx-auto text-leaf mb-3" />
-                <Badge className={`${getFertilizerStyle()} shadow-lg`}>
-                  🟢 {getFertilizerLabel()}
-                </Badge>
+          <CardContent className="pt-4 pb-4">
+            {/* Compact status indicator */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`p-3 rounded-xl ${
+                fertilizer_level === "Low" ? "bg-leaf/20 border-2 border-leaf" :
+                fertilizer_level === "Medium" ? "bg-harvest/20 border-2 border-harvest" :
+                "bg-destructive/20 border-2 border-destructive"
+              }`}>
+                <Beaker className={`w-8 h-8 ${
+                  fertilizer_level === "Low" ? "text-leaf" :
+                  fertilizer_level === "Medium" ? "text-harvest" :
+                  "text-destructive"
+                }`} />
               </div>
-            ) : fertilizer_level === "Medium" ? (
-              <div className="p-6 bg-harvest/20 rounded-2xl border-4 border-harvest mb-4">
-                <Beaker className="w-16 h-16 mx-auto text-harvest mb-3" />
-                <Badge className={`${getFertilizerStyle()} shadow-lg`}>
-                  🟡 {getFertilizerLabel()}
+              <div>
+                <Badge className={`${getFertilizerStyle()} shadow-lg text-base px-4 py-1.5`}>
+                  {fertilizer_level === "Low" ? "🟢" : fertilizer_level === "Medium" ? "🟡" : "🔴"} {getFertilizerLabel()}
                 </Badge>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {fertilizer_level === "Low" && t("result.fertilizerMinimal")}
+                  {fertilizer_level === "Medium" && t("result.fertilizerModerate")}
+                  {fertilizer_level === "High" && t("result.fertilizerNeeded")}
+                </p>
               </div>
-            ) : (
-              <div className="p-6 bg-destructive/20 rounded-2xl border-4 border-destructive mb-4">
-                <Beaker className="w-16 h-16 mx-auto text-destructive mb-3" />
-                <Badge className={`${getFertilizerStyle()} shadow-lg`}>
-                  🔴 {getFertilizerLabel()}
-                </Badge>
-              </div>
-            )}
-            
-            <p className="text-lg text-muted-foreground">
-              {fertilizer_level === "Low" && t("result.fertilizerMinimal")}
-              {fertilizer_level === "Medium" && t("result.fertilizerModerate")}
-              {fertilizer_level === "High" && t("result.fertilizerNeeded")}
-            </p>
+            </div>
 
+            {/* NPK with recommended amounts */}
             {npk_values && (
-              <div className="space-y-2 text-left bg-muted/30 p-4 rounded-lg mt-4">
-                <p className="font-semibold text-center mb-3">{t("result.npk")}</p>
+              <div className="bg-muted/30 p-3 rounded-lg">
+                <p className="font-semibold text-sm text-center mb-2">{t("result.npk")} - {language === "bn" ? "প্রতি একরে প্রয়োগ করুন" : "Apply per acre"}</p>
                 <div className="grid grid-cols-3 gap-2 text-center text-sm">
                   <div className="p-2 bg-leaf/20 rounded">
-                    <p className="font-bold">N</p>
-                    <p>{npk_values.nitrogen}</p>
+                    <p className="font-bold text-leaf">N</p>
+                    <p className="text-xs text-muted-foreground">Nitrogen</p>
+                    <p className="font-semibold text-lg">{npk_values.nitrogen}</p>
+                    <p className="text-xs text-leaf font-medium">
+                      {fertilizer_level === "High" ? "25-30" : fertilizer_level === "Medium" ? "15-20" : "5-10"} kg
+                    </p>
                   </div>
                   <div className="p-2 bg-harvest/20 rounded">
-                    <p className="font-bold">P</p>
-                    <p>{npk_values.phosphorus}</p>
+                    <p className="font-bold text-harvest">P</p>
+                    <p className="text-xs text-muted-foreground">Phosphorus</p>
+                    <p className="font-semibold text-lg">{npk_values.phosphorus}</p>
+                    <p className="text-xs text-harvest font-medium">
+                      {fertilizer_level === "High" ? "15-20" : fertilizer_level === "Medium" ? "10-15" : "5-8"} kg
+                    </p>
                   </div>
                   <div className="p-2 bg-water/20 rounded">
-                    <p className="font-bold">K</p>
-                    <p>{npk_values.potassium}</p>
+                    <p className="font-bold text-water">K</p>
+                    <p className="text-xs text-muted-foreground">Potassium</p>
+                    <p className="font-semibold text-lg">{npk_values.potassium}</p>
+                    <p className="text-xs text-water font-medium">
+                      {fertilizer_level === "High" ? "20-25" : fertilizer_level === "Medium" ? "12-18" : "6-10"} kg
+                    </p>
                   </div>
                 </div>
               </div>
@@ -227,54 +236,65 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation, 
         </Card>
 
         {/* Irrigation Card */}
-        <Card className="border-4 border-water/30 overflow-hidden">
-          <CardHeader className="pb-2 bg-gradient-to-r from-water/20 to-water/5">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Droplets className="w-6 h-6 text-water" />
+        <Card className="border-2 border-water/30 overflow-hidden">
+          <CardHeader className="py-3 bg-gradient-to-r from-water/20 to-water/5">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Droplets className="w-5 h-5 text-water" />
               💧 {t("result.irrigation")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 text-center">
-            {irrigation_needed ? (
-              <>
-                <div className="p-6 bg-water/20 rounded-2xl border-4 border-water mb-4">
-                  <AlertTriangle className="w-16 h-16 mx-auto text-water mb-3" />
-                  <Badge className="bg-water text-primary-foreground text-2xl px-6 py-3">
-                    🔵 {t("result.waterNeeded")}
-                  </Badge>
-                </div>
-                <p className="text-lg text-muted-foreground">
-                  💧 {t("result.waterYour")}
+          <CardContent className="pt-4 pb-4">
+            {/* Compact status indicator */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`p-3 rounded-xl ${
+                irrigation_needed ? "bg-water/20 border-2 border-water" : "bg-leaf/20 border-2 border-leaf"
+              }`}>
+                {irrigation_needed ? (
+                  <AlertTriangle className="w-8 h-8 text-water" />
+                ) : (
+                  <CheckCircle2 className="w-8 h-8 text-leaf" />
+                )}
+              </div>
+              <div>
+                <Badge className={`${
+                  irrigation_needed 
+                    ? "bg-water text-primary-foreground" 
+                    : "bg-leaf text-primary-foreground"
+                } shadow-lg text-base px-4 py-1.5`}>
+                  {irrigation_needed ? "🔵 " + t("result.waterNeeded") : "🟢 " + t("result.noWater")}
+                </Badge>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {irrigation_needed ? t("result.waterYour") : t("result.enoughMoisture")}
                 </p>
-              </>
-            ) : (
-              <>
-                <div className="p-6 bg-leaf/20 rounded-2xl border-4 border-leaf mb-4">
-                  <CheckCircle2 className="w-16 h-16 mx-auto text-leaf mb-3" />
-                  <Badge className="bg-leaf text-primary-foreground text-2xl px-6 py-3">
-                    🟢 {t("result.noWater")}
-                  </Badge>
-                </div>
-                <p className="text-lg text-muted-foreground">
-                  ✓ {t("result.enoughMoisture")}
-                </p>
-              </>
-            )}
+              </div>
+            </div>
 
-            <div className="flex justify-center gap-2 pt-4">
-              {[1, 2, 3, 4, 5].map((drop) => (
-                <Droplets
-                  key={drop}
-                  className={`w-8 h-8 transition-all duration-300 ${
-                    irrigation_needed
-                      ? drop <= 2
-                        ? "text-water/40"
-                        : "text-muted/20"
-                      : "text-water animate-pulse"
-                  }`}
-                  style={{ animationDelay: `${drop * 0.1}s` }}
-                />
-              ))}
+            {/* Water info section */}
+            <div className="bg-muted/30 p-3 rounded-lg">
+              <p className="font-semibold text-sm text-center mb-2">
+                {language === "bn" ? "পানির অবস্থা" : "Water Status"}
+              </p>
+              <div className="flex justify-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((drop) => (
+                  <Droplets
+                    key={drop}
+                    className={`w-6 h-6 transition-all duration-300 ${
+                      irrigation_needed
+                        ? drop <= 2
+                          ? "text-water/40"
+                          : "text-muted/20"
+                        : "text-water animate-pulse"
+                    }`}
+                    style={{ animationDelay: `${drop * 0.1}s` }}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                {irrigation_needed 
+                  ? (language === "bn" ? "আজ সেচ দিন" : "Irrigate today")
+                  : (language === "bn" ? "২-৩ দিন পর চেক করুন" : "Check again in 2-3 days")
+                }
+              </p>
             </div>
           </CardContent>
         </Card>
