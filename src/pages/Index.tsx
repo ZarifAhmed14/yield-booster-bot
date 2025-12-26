@@ -108,7 +108,7 @@ const Index = () => {
                   <Button
                     size="sm"
                     onClick={() => navigate("/history")}
-                    className="bg-leaf text-leaf-foreground hover:bg-leaf/90 shadow-md"
+                    className="bg-leaf/20 text-leaf border border-leaf/40 hover:bg-leaf/30 hover:border-leaf/60 shadow-sm"
                   >
                     <History className="w-4 h-4 mr-2" />
                     {t("history.viewHistory")}
