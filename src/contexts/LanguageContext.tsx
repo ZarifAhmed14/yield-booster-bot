@@ -29,19 +29,51 @@ const translations: Record<Language, Record<string, string>> = {
     "form.phAcidic": "Acidic",
     "form.phGood": "Good",
     "form.phAlkaline": "Alkaline",
-    "form.phTip": "Tip: Most crops grow best between pH 6.0 - 7.0",
+    "form.phTip": "Tip: Select a crop to see its optimal pH range",
+    "form.phMatch": "pH is suitable for this crop!",
+    "form.phMismatch": "pH may not be ideal for this crop",
+    "form.optimal": "Optimal",
     "form.step3": "Your Location",
     "form.locationHint": "Enter location for weather data",
     "form.submit": "Get Advice",
     "form.analyzing": "Analyzing...",
     "form.selectFirst": "Please select a crop first",
     
-    // Crops
+    // Crop Categories
     "crop.rice": "Rice",
     "crop.wheat": "Wheat",
-    "crop.maize": "Maize",
     "crop.jute": "Jute",
     "crop.potato": "Potato",
+    "crop.banana": "Banana",
+    
+    // Rice Varieties
+    "variety.rice_miniket": "Miniket",
+    "variety.rice_nazirshail": "Nazirshail",
+    "variety.rice_paijam": "Paijam",
+    
+    // Wheat Varieties
+    "variety.wheat_sonalika": "Sonalika",
+    "variety.wheat_kanchan": "Kanchan",
+    "variety.wheat_balaka": "Balaka",
+    "variety.wheat_ananda": "Ananda",
+    "variety.wheat_akbar": "Akbar",
+    "variety.wheat_barkat": "Barkat",
+    "variety.wheat_aghrani": "Aghrani",
+    
+    // Jute Varieties
+    "variety.jute_white": "White Jute",
+    "variety.jute_tossa": "Tossa Jute",
+    "variety.jute_mesta": "Mesta Jute",
+    
+    // Potato Varieties
+    "variety.potato_diamant": "BARI Alu-7 (Diamant)",
+    "variety.potato_cardinal": "BARI Alu-8 (Cardinal)",
+    "variety.potato_granola": "BARI Alu-13 (Granola)",
+    
+    // Banana Varieties
+    "variety.banana_sagor": "Sagor",
+    "variety.banana_shabri": "Shabri",
+    "variety.banana_champa": "Champa",
     
     // Results
     "result.weather": "Weather",
@@ -95,19 +127,51 @@ const translations: Record<Language, Record<string, string>> = {
     "form.phAcidic": "অম্লীয়",
     "form.phGood": "ভালো",
     "form.phAlkaline": "ক্ষারীয়",
-    "form.phTip": "টিপস: বেশিরভাগ ফসল pH ৬.০ - ৭.০ এর মধ্যে ভালো জন্মায়",
+    "form.phTip": "টিপস: সঠিক pH পরিসীমা দেখতে ফসল বাছাই করুন",
+    "form.phMatch": "এই ফসলের জন্য pH উপযুক্ত!",
+    "form.phMismatch": "এই ফসলের জন্য pH আদর্শ নাও হতে পারে",
+    "form.optimal": "আদর্শ",
     "form.step3": "আপনার এলাকা",
     "form.locationHint": "আবহাওয়া জানতে এলাকার নাম দিন",
     "form.submit": "পরামর্শ নিন",
     "form.analyzing": "বিশ্লেষণ করা হচ্ছে...",
     "form.selectFirst": "প্রথমে ফসল বাছাই করুন",
     
-    // Crops
+    // Crop Categories
     "crop.rice": "ধান",
     "crop.wheat": "গম",
-    "crop.maize": "ভুট্টা",
     "crop.jute": "পাট",
     "crop.potato": "আলু",
+    "crop.banana": "কলা",
+    
+    // Rice Varieties
+    "variety.rice_miniket": "মিনিকেট",
+    "variety.rice_nazirshail": "নাজিরশাইল",
+    "variety.rice_paijam": "পাইজাম",
+    
+    // Wheat Varieties
+    "variety.wheat_sonalika": "সোনালিকা",
+    "variety.wheat_kanchan": "কাঞ্চন",
+    "variety.wheat_balaka": "বলাকা",
+    "variety.wheat_ananda": "আনন্দ",
+    "variety.wheat_akbar": "আকবর",
+    "variety.wheat_barkat": "বরকত",
+    "variety.wheat_aghrani": "অগ্রাণী",
+    
+    // Jute Varieties
+    "variety.jute_white": "সাদা পাট",
+    "variety.jute_tossa": "তোষা পাট",
+    "variety.jute_mesta": "মেস্তা পাট",
+    
+    // Potato Varieties
+    "variety.potato_diamant": "বারি আলু-৭ (ডায়মন্ড)",
+    "variety.potato_cardinal": "বারি আলু-৮ (কার্ডিনাল)",
+    "variety.potato_granola": "বারি আলু-১৩ (গ্রানোলা)",
+    
+    // Banana Varieties
+    "variety.banana_sagor": "সাগর",
+    "variety.banana_shabri": "সবরি",
+    "variety.banana_champa": "চম্পা",
     
     // Results
     "result.weather": "আবহাওয়া",
