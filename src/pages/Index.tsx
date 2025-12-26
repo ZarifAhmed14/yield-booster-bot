@@ -115,10 +115,9 @@ const Index = () => {
                     {t("history.viewHistory")}
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
                     onClick={handleLogout}
-                    className="border-2"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     {t("auth.logout")}

@@ -3,12 +3,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
-  const { t, setShowLanguageModal } = useLanguage();
+  const { t, language, setShowLanguageModal } = useLanguage();
 
   return (
     <section className="relative overflow-hidden gradient-sky py-16 lg:py-24">
-      {/* Language Switch Button */}
-      <div className="absolute top-4 right-4 z-20">
+      {/* Language Switch Button - moved to left side */}
+      <div className="absolute top-4 left-4 z-20">
         <Button
           variant="outline"
           size="sm"
@@ -16,7 +16,7 @@ const HeroSection = () => {
           className="bg-card/80 backdrop-blur-sm border-leaf/30 hover:border-leaf hover:bg-leaf/10"
         >
           <Globe className="w-4 h-4 mr-2" />
-          🌐
+          {language === "bn" ? "ভাষা" : "Language"}
         </Button>
       </div>
 
