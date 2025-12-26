@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -5,34 +6,80 @@ import {
   Droplets, 
   CheckCircle2, 
   AlertTriangle, 
-  Info, 
   ThermometerSun, 
   CloudRain, 
   Wind,
-  Sprout
+  Sprout,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { PredictionResponse } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecommendationCardProps {
   recommendation: PredictionResponse;
   cropType: string;
   location?: string;
+  soilPh?: number;
 }
 
-const RecommendationCard = ({ recommendation, cropType, location: propLocation }: RecommendationCardProps) => {
-  const { t } = useLanguage();
+const RecommendationCard = ({ recommendation, cropType, location: propLocation, soilPh }: RecommendationCardProps) => {
+  const { t, language } = useLanguage();
+  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+  const [isLoadingAdvice, setIsLoadingAdvice] = useState(false);
   
   const { 
     fertilizer_level, 
     irrigation_needed, 
-    recommendations_text, 
     npk_values, 
     weather_data,
     location: apiLocation
   } = recommendation;
 
   const displayLocation = propLocation || apiLocation || "Unknown";
+
+  // Fetch AI advice when recommendation changes
+  useEffect(() => {
+    const fetchAiAdvice = async () => {
+      if (!weather_data) return;
+      
+      setIsLoadingAdvice(true);
+      setAiAdvice(null);
+      
+      try {
+        const varietyParts = cropType.split("_");
+        const crop = varietyParts[0];
+        const variety = varietyParts.slice(1).join(" ");
+        
+        const { data, error } = await supabase.functions.invoke("generate-advice", {
+          body: {
+            cropType: crop,
+            variety: variety,
+            soilPh: soilPh || 6.5,
+            location: displayLocation,
+            weather: weather_data,
+            fertilizerLevel: fertilizer_level,
+            irrigationNeeded: irrigation_needed,
+            language: language
+          }
+        });
+
+        if (error) {
+          console.error("Error fetching AI advice:", error);
+          setAiAdvice(null);
+        } else if (data?.advice) {
+          setAiAdvice(data.advice);
+        }
+      } catch (error) {
+        console.error("Failed to get AI advice:", error);
+      } finally {
+        setIsLoadingAdvice(false);
+      }
+    };
+
+    fetchAiAdvice();
+  }, [cropType, displayLocation, soilPh, weather_data, fertilizer_level, irrigation_needed, language]);
 
   const getFertilizerStyle = () => {
     switch (fertilizer_level) {
@@ -62,7 +109,10 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation }
     maize: "🌽",
     jute: "🌿",
     potato: "🥔",
+    banana: "🍌",
   };
+
+  const cropCategory = cropType.split("_")[0];
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6 animate-slide-up">
@@ -227,19 +277,30 @@ const RecommendationCard = ({ recommendation, cropType, location: propLocation }
       </div>
 
       {/* AI Recommendations */}
-      <Card className="border-4 border-primary/20">
+      <Card className="border-4 border-primary/20 overflow-hidden">
         <CardHeader className="pb-2 bg-gradient-to-r from-primary/10 to-transparent">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <Info className="w-6 h-6 text-primary" />
+            <Sparkles className="w-6 h-6 text-primary" />
             <Sprout className="w-5 h-5 text-leaf" />
-            {t("result.advice")} {cropEmojis[cropType] || ""} {t(`crop.${cropType}`)}
+            {t("result.advice")} {cropEmojis[cropCategory] || ""} {t(`crop.${cropCategory}`)}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="p-4 bg-muted/30 rounded-xl">
-            <p className="text-lg leading-relaxed whitespace-pre-line">
-              {recommendations_text || t("result.defaultAdvice")}
-            </p>
+          <div className="p-4 bg-muted/30 rounded-xl min-h-[100px]">
+            {isLoadingAdvice ? (
+              <div className="flex items-center justify-center gap-3 py-4">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <p className="text-muted-foreground">{t("result.generatingAdvice")}</p>
+              </div>
+            ) : aiAdvice ? (
+              <p className="text-lg leading-relaxed whitespace-pre-line">
+                {aiAdvice}
+              </p>
+            ) : (
+              <p className="text-lg leading-relaxed text-muted-foreground italic">
+                {t("result.defaultAdvice")}
+              </p>
+            )}
           </div>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             <p>🌱 {t("result.goodHarvest")} 🌾</p>

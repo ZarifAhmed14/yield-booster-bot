@@ -150,6 +150,7 @@ const Index = () => {
               recommendation={recommendation} 
               cropType={currentCrop}
               location={currentLocation}
+              soilPh={currentSoilPh}
             />
           )}
         </main>

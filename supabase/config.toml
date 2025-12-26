@@ -1,1 +1,4 @@
 project_id = "mshwzjothmycrntqrkhm"
+
+[functions.generate-advice]
+verify_jwt = false

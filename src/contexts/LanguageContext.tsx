@@ -95,10 +95,11 @@ const translations: Record<Language, Record<string, string>> = {
     "result.noWater": "NO WATER NEEDED",
     "result.enoughMoisture": "Soil has enough moisture",
     "result.npk": "NPK Amount:",
-    "result.advice": "Advice for",
+    "result.advice": "AI Advice for",
     "result.defaultAdvice": "See fertilizer and irrigation advice above.",
     "result.goodHarvest": "Good harvest!",
     "result.ready": "Your recommendations are ready!",
+    "result.generatingAdvice": "Generating personalized advice...",
     "result.soilMoisture": "Soil Moisture",
     
     // Auth
@@ -227,10 +228,11 @@ const translations: Record<Language, Record<string, string>> = {
     "result.noWater": "সেচ লাগবে না",
     "result.enoughMoisture": "মাটিতে যথেষ্ট আর্দ্রতা আছে",
     "result.npk": "NPK পরিমাণ:",
-    "result.advice": "পরামর্শ",
+    "result.advice": "AI পরামর্শ",
     "result.defaultAdvice": "আপনার ফসলের জন্য সার ও সেচের পরামর্শ উপরে দেখুন।",
     "result.goodHarvest": "ভালো ফসল হোক!",
     "result.ready": "আপনার পরামর্শ তৈরি!",
+    "result.generatingAdvice": "ব্যক্তিগত পরামর্শ তৈরি হচ্ছে...",
     "result.soilMoisture": "মাটির আর্দ্রতা",
     
     // Auth
