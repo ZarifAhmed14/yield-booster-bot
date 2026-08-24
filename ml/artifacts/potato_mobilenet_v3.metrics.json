@@ -1,0 +1,115 @@
+{
+  "dataset": "PlantVillage potato subset (online demo data)",
+  "seed": 42,
+  "class_names": [
+    "early_blight",
+    "healthy",
+    "late_blight"
+  ],
+  "split_sizes": {
+    "train": 1506,
+    "validation": 323,
+    "test": 323
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.28628877613441167,
+      "train_accuracy": 0.8897742363877822,
+      "val_accuracy": 0.7368421052631579,
+      "val_macro_f1": 0.6723674623229628
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.10307758834657035,
+      "train_accuracy": 0.9548472775564409,
+      "val_accuracy": 0.9226006191950464,
+      "val_macro_f1": 0.8574428016187844
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.05547207831139188,
+      "train_accuracy": 0.9794156706507304,
+      "val_accuracy": 0.8823529411764706,
+      "val_macro_f1": 0.8079043143631265
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.04552429125138409,
+      "train_accuracy": 0.9794156706507304,
+      "val_accuracy": 0.9164086687306502,
+      "val_macro_f1": 0.8665565045694024
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.0825675808506737,
+      "train_accuracy": 0.9628154050464808,
+      "val_accuracy": 0.9287925696594427,
+      "val_macro_f1": 0.8788850007912709
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.04389501002383422,
+      "train_accuracy": 0.9794156706507304,
+      "val_accuracy": 0.9473684210526315,
+      "val_macro_f1": 0.8990278684616899
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.042311729633547415,
+      "train_accuracy": 0.9787516600265604,
+      "val_accuracy": 0.9380804953560371,
+      "val_macro_f1": 0.8832291958793727
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.031720934359583716,
+      "train_accuracy": 0.9880478087649402,
+      "val_accuracy": 0.9442724458204335,
+      "val_macro_f1": 0.893705301505129
+    }
+  ],
+  "test": {
+    "loss": 0.12226594956887268,
+    "accuracy": 0.9597523219814241,
+    "macro_f1": 0.9183662866853237,
+    "per_class": [
+      {
+        "precision": 0.9868421052631579,
+        "recall": 1.0,
+        "f1": 0.9933774834437086,
+        "support": 150
+      },
+      {
+        "precision": 0.6764705882352942,
+        "recall": 1.0,
+        "f1": 0.8070175438596492,
+        "support": 23
+      },
+      {
+        "precision": 1.0,
+        "recall": 0.9133333333333333,
+        "f1": 0.9547038327526133,
+        "support": 150
+      }
+    ],
+    "confusion_matrix": [
+      [
+        150,
+        0,
+        0
+      ],
+      [
+        0,
+        23,
+        0
+      ],
+      [
+        2,
+        11,
+        137
+      ]
+    ]
+  },
+  "limitations": "Controlled-background online images; not validated for Bangladesh field use or treatment decisions."
+}

@@ -288,21 +288,20 @@ const translations: Record<Language, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguageState] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("bn");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   useEffect(() => {
-    const savedLang = localStorage.getItem("krishimitra-lang");
+    const savedLang = localStorage.getItem("alusathi-lang") || localStorage.getItem("krishimitra-lang");
     if (savedLang === "en" || savedLang === "bn") {
       setLanguageState(savedLang);
-    } else {
-      setShowLanguageModal(true);
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("krishimitra-lang", lang);
+    localStorage.setItem("alusathi-lang", lang);
+    localStorage.removeItem("krishimitra-lang");
     setShowLanguageModal(false);
   };
 

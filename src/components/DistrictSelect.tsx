@@ -42,6 +42,7 @@ const DistrictSelect = ({ value, onChange }: DistrictSelectProps) => {
         <Button
           variant="outline"
           role="combobox"
+          aria-label={t("form.step3")}
           aria-expanded={open}
           className="w-full h-14 text-xl justify-between border-2 border-water/30 hover:border-water/50"
         >

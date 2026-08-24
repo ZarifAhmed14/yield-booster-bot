@@ -1,6 +1,4 @@
-// API service to connect to the backend at Render
-
-const API_BASE_URL = "https://hackathon-project-ysen.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export interface PredictionRequest {
   crop_type: string;
@@ -38,29 +36,45 @@ export interface PredictionResponse {
 }
 
 export async function getPrediction(data: PredictionRequest): Promise<PredictionResponse> {
-  const response = await fetch(`${API_BASE_URL}/predict-with-weather`, {
+  const weather = await getWeather(data.location);
+  const response = await fetch(`${API_BASE_URL}/predict`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      crop_type: data.crop_type.split("_")[0],
+      soil_ph: data.soil_ph,
+      soil_moisture: weather.soil_moisture,
+      temperature: weather.temperature,
+      rainfall: weather.rainfall,
+    }),
   });
 
   if (!response.ok) {
     throw new Error(`API Error: ${response.status}`);
   }
 
-  return response.json();
+  return { ...(await response.json()), location: data.location, weather_data: weather };
 }
 
 export async function getWeather(location: string): Promise<WeatherData> {
-  const response = await fetch(`${API_BASE_URL}/weather?location=${encodeURIComponent(location)}`);
-  
-  if (!response.ok) {
-    throw new Error(`Weather API Error: ${response.status}`);
-  }
+  const geocoding = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json&countryCode=BD`);
+  const place = (await geocoding.json()).results?.[0];
+  if (!geocoding.ok || !place) throw new Error("Location not found");
 
-  return response.json();
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&timezone=Asia%2FDhaka`);
+  if (!response.ok) throw new Error(`Weather API Error: ${response.status}`);
+
+  const { current } = await response.json();
+  const rainfall = current.precipitation ?? 0;
+  return {
+    temperature: current.temperature_2m,
+    rainfall,
+    humidity: current.relative_humidity_2m,
+    weather: current.weather_code < 3 ? "Clear" : current.weather_code < 50 ? "Cloudy" : current.weather_code < 70 ? "Rain" : "Storms",
+    soil_moisture: Math.min(95, Math.max(10, current.relative_humidity_2m * 0.6 + rainfall * 5)),
+  };
 }
 
 export async function checkHealth(): Promise<boolean> {

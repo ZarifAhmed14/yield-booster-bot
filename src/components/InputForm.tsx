@@ -53,10 +53,6 @@ const cropVarieties: CropVariety[] = [
   { value: "potato_cardinal", category: "potato", emoji: "🥔", minPH: 5.5, maxPH: 6.5 },
   { value: "potato_granola", category: "potato", emoji: "🥔", minPH: 5.5, maxPH: 6.5 },
   
-  // Banana varieties
-  { value: "banana_sagor", category: "banana", emoji: "🍌", minPH: 6.5, maxPH: 7.5 },
-  { value: "banana_shabri", category: "banana", emoji: "🍌", minPH: 6.5, maxPH: 7.5 },
-  { value: "banana_champa", category: "banana", emoji: "🍌", minPH: 6.5, maxPH: 7.5 },
 ];
 
 const categories = [
@@ -64,7 +60,6 @@ const categories = [
   { value: "wheat", emoji: "🌾" },
   { value: "jute", emoji: "🌿" },
   { value: "potato", emoji: "🥔" },
-  { value: "banana", emoji: "🍌" },
 ];
 
 const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
@@ -150,7 +145,7 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
             
             {/* Category Selection */}
             <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="h-16 text-xl font-semibold border-2 border-leaf/30">
+              <SelectTrigger aria-label={t("form.step1")} className="h-16 text-xl font-semibold border-2 border-leaf/30">
                 <SelectValue placeholder={`👉 ${t("form.selectCrop")}`} />
               </SelectTrigger>
               <SelectContent className="bg-card">
@@ -173,7 +168,7 @@ const InputForm = ({ onSubmit, isLoading }: InputFormProps) => {
                   {t("form.selectVariety")}
                 </Label>
                 <Select value={selectedVariety} onValueChange={setSelectedVariety}>
-                  <SelectTrigger className="h-14 text-lg font-semibold border-2 border-leaf/20">
+                  <SelectTrigger aria-label={t("form.selectVariety")} className="h-14 text-lg font-semibold border-2 border-leaf/20">
                     <SelectValue placeholder={`👉 ${t("form.chooseVariety")}`} />
                   </SelectTrigger>
                   <SelectContent className="bg-card">

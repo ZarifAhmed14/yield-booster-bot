@@ -1,0 +1,160 @@
+from __future__ import annotations
+
+import asyncio
+import io
+import os
+import time
+from collections import defaultdict, deque
+from pathlib import Path
+
+import torch
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
+from PIL import Image, ImageStat, UnidentifiedImageError
+from torchvision import models, transforms
+
+
+MODEL_PATH = Path(os.getenv("ALUSATHI_MODEL", "ml/artifacts/potato_mobilenet_v3.pt"))
+MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
+inference_slots = asyncio.Semaphore(2)
+request_times: dict[str, deque[float]] = defaultdict(deque)
+LABELS = {
+    "early_blight": {"en": "Early blight", "bn": "আগাম ধসা রোগ"},
+    "healthy": {"en": "No supported blight pattern", "bn": "সমর্থিত ধসার লক্ষণ পাওয়া যায়নি"},
+    "late_blight": {"en": "Late blight", "bn": "নাবি ধসা রোগ"},
+    "unknown": {"en": "Uncertain result", "bn": "অনিশ্চিত ফলাফল"},
+}
+NEXT_STEPS = {
+    "early_blight": {
+        "en": ["Isolate heavily affected foliage.", "Avoid overhead watering and record spread for 48 hours.", "Send this scan to a field officer before any chemical treatment."],
+        "bn": ["অতিরিক্ত আক্রান্ত পাতা আলাদা করুন।", "পাতার উপর দিয়ে সেচ এড়িয়ে ৪৮ ঘণ্টা রোগের বিস্তার লক্ষ্য করুন।", "কোনো রাসায়নিক ব্যবহারের আগে এই স্ক্যান মাঠ কর্মকর্তার কাছে পাঠান।"],
+    },
+    "late_blight": {
+        "en": ["Treat this as urgent and avoid moving wet foliage between fields.", "Improve drainage and photograph nearby plants.", "Request field-officer review before selecting any fungicide."],
+        "bn": ["এটিকে জরুরি হিসেবে বিবেচনা করুন এবং ভেজা গাছ এক জমি থেকে অন্য জমিতে নেবেন না।", "পানি নিষ্কাশন ঠিক করুন এবং আশপাশের গাছের ছবি তুলুন।", "ছত্রাকনাশক বাছাইয়ের আগে মাঠ কর্মকর্তার পর্যালোচনা নিন।"],
+    },
+    "healthy": {
+        "en": ["No supported blight pattern was detected.", "Continue weekly scans from the same field points.", "Escalate if symptoms spread or the plant declines."],
+        "bn": ["সমর্থিত ধসা রোগের লক্ষণ পাওয়া যায়নি।", "একই স্থান থেকে প্রতি সপ্তাহে স্ক্যান চালিয়ে যান।", "লক্ষণ ছড়ালে বা গাছ দুর্বল হলে বিশেষজ্ঞকে জানান।"],
+    },
+    "unknown": {
+        "en": ["Retake two close, sharp leaf photos in daylight.", "Include both sides of the affected leaf.", "Ask a field officer to review; do not treat from this result."],
+        "bn": ["দিনের আলোতে পাতার দুটি পরিষ্কার কাছের ছবি আবার তুলুন।", "আক্রান্ত পাতার দুই পাশের ছবি দিন।", "মাঠ কর্মকর্তার পর্যালোচনা নিন; এই ফলাফলের ভিত্তিতে চিকিৎসা করবেন না।"],
+    },
+}
+
+app = FastAPI(title="AluSathi demo disease API", version="0.1.0", docs_url=None, redoc_url=None)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = None
+class_names: list[str] = []
+preprocess = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+])
+
+
+def load_model() -> None:
+    global model, class_names
+    if not MODEL_PATH.exists():
+        return
+    checkpoint = torch.load(MODEL_PATH, map_location=device, weights_only=True)
+    class_names = checkpoint["class_names"]
+    loaded = models.mobilenet_v3_small(weights=None)
+    loaded.classifier[3] = torch.nn.Linear(loaded.classifier[3].in_features, len(class_names))
+    loaded.load_state_dict(checkpoint["state_dict"])
+    loaded.eval().to(device)
+    model = loaded
+
+
+@app.on_event("startup")
+def startup() -> None:
+    load_model()
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers.update({
+        "Cache-Control": "no-store",
+        "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+        "Referrer-Policy": "no-referrer",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Permissions-Policy": "camera=(self), microphone=(), geolocation=()",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    })
+    return response
+
+
+@app.exception_handler(Exception)
+async def safe_error(_, __):
+    return JSONResponse(status_code=500, content={"detail": "Analysis failed safely. Please try another image."})
+
+
+@app.get("/health")
+def health() -> dict:
+    return {"status": "ready" if model is not None else "model_missing", "device": str(device), "demo_only": True}
+
+
+@app.post("/disease/predict")
+async def predict(request: Request, file: UploadFile = File(...)) -> dict:
+    if model is None:
+        raise HTTPException(503, "Demo model is not trained yet.")
+    client = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    recent = request_times[client]
+    while recent and recent[0] < now - 60:
+        recent.popleft()
+    if len(recent) >= 20:
+        raise HTTPException(429, "Too many scans. Please wait one minute.")
+    recent.append(now)
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(415, "Upload a JPEG, PNG, or WebP image.")
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "Image must be 8 MB or smaller.")
+    try:
+        with Image.open(io.BytesIO(content)) as source:
+            if source.format not in ALLOWED_FORMATS:
+                raise HTTPException(400, "The file content does not match an allowed image type.")
+            if min(source.size) < 128 or max(source.size) > 8000:
+                raise HTTPException(400, "Image dimensions must be between 128 and 8,000 pixels.")
+            source.verify()
+        with Image.open(io.BytesIO(content)) as source:
+            image = source.convert("RGB")
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+        raise HTTPException(400, "The uploaded file is not a safe, readable image.")
+    grayscale = image.convert("L").resize((128, 128))
+    contrast = ImageStat.Stat(grayscale).stddev[0]
+    brightness = ImageStat.Stat(grayscale).mean[0]
+    quality_warning = contrast < 18 or brightness < 35 or brightness > 225
+
+    async with inference_slots:
+        with torch.inference_mode():
+            probabilities = torch.softmax(model(preprocess(image).unsqueeze(0).to(device)), dim=1)[0].cpu()
+    sorted_values, sorted_indexes = torch.sort(probabilities, descending=True)
+    confidence = float(sorted_values[0])
+    margin = float(sorted_values[0] - sorted_values[1])
+    predicted = class_names[int(sorted_indexes[0])]
+    uncertain = quality_warning or confidence < 0.72 or margin < 0.18
+    label = "unknown" if uncertain else predicted
+
+    return {
+        "label": label,
+        "labels": LABELS[label],
+        "confidence": round(confidence, 4),
+        "quality_warning": quality_warning,
+        # Demo data has field-domain and false-negative risk, so every result stays advisory.
+        "needs_expert_review": True,
+        "probabilities": {class_names[index]: round(float(probabilities[index]), 4) for index in range(len(class_names))},
+        "next_steps": NEXT_STEPS[label],
+        "model_scope": "PlantVillage online-image demo; not field-validated.",
+        "treatment_status": "Draft guidance only—chemical decisions require field-officer approval.",
+    }
+
+
+load_model()
