@@ -1,4 +1,4 @@
-# AluSathi demo vision model
+# AluSathi vision model
 
 The demo fine-tunes MobileNetV3-Small on the three potato classes from the open PlantVillage dataset: early blight, healthy, and late blight.
 
@@ -11,6 +11,8 @@ cd ../..
 .venv/Scripts/python.exe -m uvicorn ml.server:app --host 127.0.0.1 --port 8765
 ```
 
-PlantVillage contains controlled-background images. The resulting model is suitable for a transparent demo and training-pipeline validation, not pesticide selection or field deployment. Replace it with locally collected, expert-labelled Bangladesh field data and evaluate using field-held-out splits before production use.
+PlantVillage contains controlled-background images. The resulting model is suitable for screening-pipeline validation, not pesticide selection or field deployment. Replace it with locally collected, expert-labelled Bangladesh field data and evaluate using field-held-out splits before production use.
+
+The backend loads the checkpoint named by `ALUSATHI_MODEL` and exposes the loaded filename, version, classes and recorded test accuracy from `/health`. A replacement checkpoint must keep the same `class_names` and `state_dict` structure or the loader must be adapted and parity-tested before release.
 
 Dataset citation: Mohanty, Hughes & Salathe, *Using Deep Learning for Image-Based Plant Disease Detection*, Frontiers in Plant Science (2016), DOI: 10.3389/fpls.2016.01419.

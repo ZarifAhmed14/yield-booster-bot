@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import json
 import os
 import time
 from collections import defaultdict, deque
@@ -15,6 +16,8 @@ from torchvision import models, transforms
 
 
 MODEL_PATH = Path(os.getenv("ALUSATHI_MODEL", "ml/artifacts/potato_mobilenet_v3.pt"))
+MODEL_METADATA_PATH = Path(os.getenv("ALUSATHI_MODEL_METADATA", "ml/artifacts/potato_mobilenet_v3.metrics.json"))
+MODEL_VERSION = os.getenv("ALUSATHI_MODEL_VERSION", "plantvillage-mobilenet-v3-2026.1")
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
@@ -28,20 +31,20 @@ LABELS = {
 }
 NEXT_STEPS = {
     "early_blight": {
-        "en": ["Isolate heavily affected foliage.", "Avoid overhead watering and record spread for 48 hours.", "Send this scan to a field officer before any chemical treatment."],
-        "bn": ["অতিরিক্ত আক্রান্ত পাতা আলাদা করুন।", "পাতার উপর দিয়ে সেচ এড়িয়ে ৪৮ ঘণ্টা রোগের বিস্তার লক্ষ্য করুন।", "কোনো রাসায়নিক ব্যবহারের আগে এই স্ক্যান মাঠ কর্মকর্তার কাছে পাঠান।"],
+        "en": ["Mark heavily affected foliage.", "Avoid overhead watering and record spread for 48 hours.", "Ask an agricultural expert before any chemical treatment."],
+        "bn": ["অতিরিক্ত আক্রান্ত পাতা চিহ্নিত করুন।", "পাতার উপর দিয়ে সেচ এড়িয়ে ৪৮ ঘণ্টা রোগের বিস্তার লক্ষ্য করুন।", "কোনো রাসায়নিক ব্যবহারের আগে কৃষি বিশেষজ্ঞের পরামর্শ নিন।"],
     },
     "late_blight": {
-        "en": ["Treat this as urgent and avoid moving wet foliage between fields.", "Improve drainage and photograph nearby plants.", "Request field-officer review before selecting any fungicide."],
-        "bn": ["এটিকে জরুরি হিসেবে বিবেচনা করুন এবং ভেজা গাছ এক জমি থেকে অন্য জমিতে নেবেন না।", "পানি নিষ্কাশন ঠিক করুন এবং আশপাশের গাছের ছবি তুলুন।", "ছত্রাকনাশক বাছাইয়ের আগে মাঠ কর্মকর্তার পর্যালোচনা নিন।"],
+        "en": ["Treat this as urgent and avoid moving wet foliage between fields.", "Improve drainage and photograph nearby plants.", "Ask an agricultural expert before selecting any fungicide."],
+        "bn": ["এটিকে জরুরি হিসেবে বিবেচনা করুন এবং ভেজা গাছ এক জমি থেকে অন্য জমিতে নেবেন না।", "পানি নিষ্কাশন ঠিক করুন এবং আশপাশের গাছের ছবি তুলুন।", "ছত্রাকনাশক বাছাইয়ের আগে কৃষি বিশেষজ্ঞের পরামর্শ নিন।"],
     },
     "healthy": {
         "en": ["No supported blight pattern was detected.", "Continue weekly scans from the same field points.", "Escalate if symptoms spread or the plant declines."],
         "bn": ["সমর্থিত ধসা রোগের লক্ষণ পাওয়া যায়নি।", "একই স্থান থেকে প্রতি সপ্তাহে স্ক্যান চালিয়ে যান।", "লক্ষণ ছড়ালে বা গাছ দুর্বল হলে বিশেষজ্ঞকে জানান।"],
     },
     "unknown": {
-        "en": ["Retake two close, sharp leaf photos in daylight.", "Include both sides of the affected leaf.", "Ask a field officer to review; do not treat from this result."],
-        "bn": ["দিনের আলোতে পাতার দুটি পরিষ্কার কাছের ছবি আবার তুলুন।", "আক্রান্ত পাতার দুই পাশের ছবি দিন।", "মাঠ কর্মকর্তার পর্যালোচনা নিন; এই ফলাফলের ভিত্তিতে চিকিৎসা করবেন না।"],
+        "en": ["Retake two close, sharp leaf photos in daylight.", "Include both sides of the affected leaf.", "Ask an agricultural expert; do not treat from this result."],
+        "bn": ["দিনের আলোতে পাতার দুটি পরিষ্কার কাছের ছবি আবার তুলুন।", "আক্রান্ত পাতার দুই পাশের ছবি দিন।", "কৃষি বিশেষজ্ঞের পরামর্শ নিন; এই ফলাফলের ভিত্তিতে চিকিৎসা করবেন না।"],
     },
 }
 
@@ -49,6 +52,7 @@ app = FastAPI(title="AluSathi demo disease API", version="0.1.0", docs_url=None,
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = None
 class_names: list[str] = []
+model_metadata: dict = {}
 preprocess = transforms.Compose([
     transforms.Resize(256),
     transforms.CenterCrop(224),
@@ -58,7 +62,7 @@ preprocess = transforms.Compose([
 
 
 def load_model() -> None:
-    global model, class_names
+    global model, class_names, model_metadata
     if not MODEL_PATH.exists():
         return
     checkpoint = torch.load(MODEL_PATH, map_location=device, weights_only=True)
@@ -68,6 +72,9 @@ def load_model() -> None:
     loaded.load_state_dict(checkpoint["state_dict"])
     loaded.eval().to(device)
     model = loaded
+    if MODEL_METADATA_PATH.exists():
+        with MODEL_METADATA_PATH.open("r", encoding="utf-8") as metadata_file:
+            model_metadata = json.load(metadata_file)
 
 
 @app.on_event("startup")
@@ -97,13 +104,21 @@ async def safe_error(_, __):
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ready" if model is not None else "model_missing", "device": str(device), "demo_only": True}
+    return {
+        "status": "ready" if model is not None else "model_missing",
+        "device": str(device),
+        "model": MODEL_PATH.name,
+        "model_version": MODEL_VERSION,
+        "classes": class_names,
+        "test_accuracy": model_metadata.get("test", {}).get("accuracy"),
+        "demo_only": True,
+    }
 
 
 @app.post("/disease/predict")
 async def predict(request: Request, file: UploadFile = File(...)) -> dict:
     if model is None:
-        raise HTTPException(503, "Demo model is not trained yet.")
+        raise HTTPException(503, "The disease-screening model is unavailable.")
     client = request.client.host if request.client else "unknown"
     now = time.monotonic()
     recent = request_times[client]
@@ -152,8 +167,8 @@ async def predict(request: Request, file: UploadFile = File(...)) -> dict:
         "needs_expert_review": True,
         "probabilities": {class_names[index]: round(float(probabilities[index]), 4) for index in range(len(class_names))},
         "next_steps": NEXT_STEPS[label],
-        "model_scope": "PlantVillage online-image demo; not field-validated.",
-        "treatment_status": "Draft guidance only—chemical decisions require field-officer approval.",
+        "model_scope": "Online-image screening model; Bangladesh field validation is pending.",
+        "treatment_status": "Screening guidance only—confirm chemical decisions with an agricultural expert.",
     }
 
 
