@@ -2,6 +2,8 @@
 
 Bangla-first, mobile-friendly potato leaf screening for Bangladesh farmers. FieldWatch supports one-leaf checks, a guided five-location field check, weather context, voice guidance and a private on-device field diary.
 
+Competition evidence, demo instructions and honest completion status are indexed in [`competition/README.md`](competition/README.md).
+
 ## Run locally
 
 ```powershell

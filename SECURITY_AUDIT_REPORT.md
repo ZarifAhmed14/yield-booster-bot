@@ -1,55 +1,41 @@
-# Security Audit Report — KrishiMitra
+# AluSathi Security Review
 
-**Date:** 2026-06-23
-**Scope:** Three findings from the security scan
+**Reviewed:** 31 August 2026
 
-## Findings Fixed
+**Scope:** active React farmer flow, FastAPI image endpoint and offline queue
 
-| # | Internal ID | Severity | Fix |
-|---|---|---|---|
-| 1 | `SUPA_auth_leaked_password_protection` | WARN | Enabled HIBP leaked-password protection on the auth provider. New/changed passwords are now checked against the Have I Been Pwned database. |
-| 2 | `profiles_missing_delete` | WARN | Added RLS policy **"Users can delete their own profile"** on `public.profiles` — `DELETE USING (auth.uid() = user_id)`. |
-| 3 | `recommendations_history_missing_update` | WARN | Added RLS policy **"Users can update their own recommendations"** on `public.recommendations_history` — `UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)`. |
+## Controls verified
 
-All three findings were marked as **fixed** in the scanner.
+| Area | Control |
+| --- | --- |
+| Upload size | Server reads at most 8 MB plus one byte and rejects larger files |
+| Upload type | JPEG, PNG and WebP allowlist; SVG is rejected |
+| File content | Pillow decodes and verifies the image instead of trusting MIME type |
+| Image bounds | Shortest side must be at least 128 px; longest side no more than 8,000 px |
+| Decompression safety | Malformed files and Pillow decompression-bomb errors fail closed |
+| Abuse control | Per-client request limit and two concurrent inference slots |
+| Error handling | Generic server error response; no stack trace returned to farmers |
+| Response headers | CSP, HSTS, frame denial, no-sniff, no-referrer and no-store |
+| Privacy | Uploaded images are processed in memory and are not added to training data |
+| Offline privacy | Pending images stay in local IndexedDB until successful synchronization |
+| Model safety | Field-validation lock hides disease names and confidence by default |
+| Advice safety | No pesticide product or dosage is generated; expert confirmation is required |
 
-## Validation — Current RLS Policy State
+## Automated evidence
 
-Query: `SELECT ... FROM pg_policies WHERE tablename IN ('profiles','recommendations_history')`
+- Spoofed JPEG content returns HTTP 400.
+- SVG MIME type returns HTTP 415.
+- A valid image returns `unknown` while field validation is false.
+- Model and policy unit suite passes.
+- Production dependency audit reports zero known production vulnerabilities.
 
-### `public.profiles`
-| Command | Policy | USING | WITH CHECK |
-|---|---|---|---|
-| SELECT | Users can view their own profile | `auth.uid() = user_id` | — |
-| INSERT | Users can insert their own profile | — | `auth.uid() = user_id` |
-| UPDATE | Users can update their own profile | `auth.uid() = user_id` | — |
-| DELETE | **Users can delete their own profile** ✅ | `auth.uid() = user_id` | — |
+## Residual risks
 
-### `public.recommendations_history`
-| Command | Policy | USING | WITH CHECK |
-|---|---|---|---|
-| SELECT | Users can view their own recommendations | `auth.uid() = user_id` | — |
-| INSERT | Users can insert their own recommendations | — | `auth.uid() = user_id` |
-| UPDATE | **Users can update their own recommendations** ✅ | `auth.uid() = user_id` | `auth.uid() = user_id` |
-| DELETE | Users can delete their own recommendations | `auth.uid() = user_id` | — |
+- The in-memory per-client rate-limit table is suitable for a single demo process, not a distributed public service.
+- Production deployment still needs a trusted reverse proxy, HTTPS termination, centralized rate limiting, request logging without image contents, uptime monitoring and an incident process.
+- IndexedDB is device-local, not encrypted application storage. Farmers should use a device they control.
+- The three-class model cannot prove that an upload contains a potato leaf; the field-validation lock currently contains this risk.
 
-Both tables now have complete CRUD coverage scoped to the owning user.
+## Release decision
 
-## Behavior By Role
-
-| Role | profiles (own row) | profiles (other row) | recommendations_history (own row) | recommendations_history (other row) |
-|---|---|---|---|---|
-| `anon` (signed-out) | ❌ all denied (`auth.uid()` is NULL) | ❌ denied | ❌ denied | ❌ denied |
-| `authenticated` (owner) | ✅ SELECT / INSERT / UPDATE / DELETE | ❌ denied | ✅ SELECT / INSERT / UPDATE / DELETE | ❌ denied |
-| `authenticated` (non-owner) | ❌ all denied | ❌ denied | ❌ all denied | ❌ denied |
-| `service_role` | ✅ bypasses RLS | ✅ bypasses RLS | ✅ bypasses RLS | ✅ bypasses RLS |
-
-Notes:
-- Policies are attached to the `public` role, which both `anon` and `authenticated` inherit, so the `auth.uid() = user_id` predicate is what enforces isolation.
-- `service_role` bypasses RLS by design — used by edge functions only.
-
-## Residual Notes (out of scope for this task)
-The linter still reports two `SECURITY DEFINER` function warnings (`handle_new_user`, `update_updated_at_column`). These are triggers/auth helpers and are expected to be definer-scoped; left untouched per your instructions to only fix the three listed IDs.
-
-## Re-scan
-Three targeted findings are cleared. Run a full re-scan from the Security panel any time to confirm scanner-side state.
+Suitable for a controlled competition demo. Not approved for unsupervised public field diagnosis.
