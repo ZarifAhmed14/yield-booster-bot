@@ -35,20 +35,20 @@ LABELS = {
 }
 NEXT_STEPS = {
     "early_blight": {
-        "en": ["Mark heavily affected foliage.", "Avoid overhead watering and record spread for 48 hours.", "Ask an agricultural expert before any chemical treatment."],
-        "bn": ["অতিরিক্ত আক্রান্ত পাতা চিহ্নিত করুন।", "পাতার উপর দিয়ে সেচ এড়িয়ে ৪৮ ঘণ্টা রোগের বিস্তার লক্ষ্য করুন।", "কোনো রাসায়নিক ব্যবহারের আগে কৃষি বিশেষজ্ঞের পরামর্শ নিন।"],
+        "en": ["Mark the leaf with visible spots.", "Do not water over the leaves; watch the nearby plants for 48 hours.", "Call 16123 or ask an agricultural officer before using any chemical."],
+        "bn": ["দাগওয়ালা পাতাটি চিহ্ন দিয়ে রাখুন।", "পাতার উপর পানি দেবেন না; পাশের গাছগুলো ৪৮ ঘণ্টা দেখুন।", "ওষুধ দেওয়ার আগে ১৬১২৩-এ কল করুন বা কৃষি কর্মকর্তাকে জিজ্ঞেস করুন।"],
     },
     "late_blight": {
-        "en": ["Treat this as urgent and avoid moving wet foliage between fields.", "Improve drainage and photograph nearby plants.", "Ask an agricultural expert before selecting any fungicide."],
-        "bn": ["এটিকে জরুরি হিসেবে বিবেচনা করুন এবং ভেজা গাছ এক জমি থেকে অন্য জমিতে নেবেন না।", "পানি নিষ্কাশন ঠিক করুন এবং আশপাশের গাছের ছবি তুলুন।", "ছত্রাকনাশক বাছাইয়ের আগে কৃষি বিশেষজ্ঞের পরামর্শ নিন।"],
+        "en": ["Do not carry wet leaves or plants to another field.", "Open blocked drainage and photograph nearby plants.", "Call 16123 or ask an agricultural officer before using any chemical."],
+        "bn": ["ভেজা পাতা বা গাছ অন্য জমিতে নেবেন না।", "জমির পানি বের হওয়ার পথ খুলে দিন এবং পাশের গাছের ছবি তুলুন।", "ওষুধ দেওয়ার আগে ১৬১২৩-এ কল করুন বা কৃষি কর্মকর্তাকে জিজ্ঞেস করুন।"],
     },
     "healthy": {
-        "en": ["No supported blight pattern was detected.", "Continue weekly scans from the same field points.", "Escalate if symptoms spread or the plant declines."],
-        "bn": ["সমর্থিত ধসা রোগের লক্ষণ পাওয়া যায়নি।", "একই স্থান থেকে প্রতি সপ্তাহে স্ক্যান চালিয়ে যান।", "লক্ষণ ছড়ালে বা গাছ দুর্বল হলে বিশেষজ্ঞকে জানান।"],
+        "en": ["This photograph shows no clear early- or late-blight pattern.", "Check the same field places again next week.", "Call 16123 or ask an agricultural officer if spots spread or plants weaken."],
+        "bn": ["এই ছবিতে আগাম বা নাবি ধসার পরিষ্কার চিহ্ন পাওয়া যায়নি।", "আগামী সপ্তাহে জমির একই জায়গাগুলো আবার দেখুন।", "দাগ ছড়ালে বা গাছ দুর্বল হলে ১৬১২৩-এ কল করুন বা কৃষি কর্মকর্তাকে জানান।"],
     },
     "unknown": {
-        "en": ["Retake two close, sharp leaf photos in daylight.", "Include both sides of the affected leaf.", "Ask an agricultural expert; do not treat from this result."],
-        "bn": ["দিনের আলোতে পাতার দুটি পরিষ্কার কাছের ছবি আবার তুলুন।", "আক্রান্ত পাতার দুই পাশের ছবি দিন।", "কৃষি বিশেষজ্ঞের পরামর্শ নিন; এই ফলাফলের ভিত্তিতে চিকিৎসা করবেন না।"],
+        "en": ["Retake two close, clear photographs in daylight.", "Photograph both sides of the same leaf.", "Do not use a chemical from this result; call 16123 or ask an agricultural officer."],
+        "bn": ["দিনের আলোতে কাছ থেকে দুটি পরিষ্কার ছবি তুলুন।", "একই পাতার দুই পাশের ছবি দিন।", "এই ফল দেখে ওষুধ দেবেন না; ১৬১২৩-এ কল করুন বা কৃষি কর্মকর্তাকে জিজ্ঞেস করুন।"],
     },
 }
 

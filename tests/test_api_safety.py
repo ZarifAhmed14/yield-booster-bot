@@ -31,6 +31,8 @@ class ApiSafetyTest(unittest.TestCase):
         payload = asyncio.run(predict(self.request(), self.upload(content.getvalue(), "image/jpeg")))
         self.assertEqual(payload["label"], "unknown")
         self.assertIn("field_validation_pending", payload["rejection_reasons"])
+        self.assertIn("১৬১২৩", payload["next_steps"]["bn"][2])
+        self.assertIn("ওষুধ", payload["next_steps"]["bn"][2])
 
     def test_rejects_spoofed_image_upload(self):
         with self.assertRaises(HTTPException) as caught:
