@@ -1,0 +1,749 @@
+{
+  "evaluation_scope": "External regional images excluded from model training",
+  "model": "potato_mobilenet_v3.pt",
+  "device": "cuda",
+  "images": 13800,
+  "class_names": [
+    "early_blight",
+    "healthy",
+    "late_blight"
+  ],
+  "policy": {
+    "confidence_threshold": 0.72,
+    "margin_threshold": 0.18
+  },
+  "raw": {
+    "accuracy": 0.5118840579710144,
+    "macro_f1": 0.5033658918336573,
+    "per_class": {
+      "early_blight": {
+        "precision": 0.44473684210526315,
+        "recall": 0.5985416666666666,
+        "f1": 0.5103019538188277,
+        "support": 4800
+      },
+      "healthy": {
+        "precision": 0.7184623714131023,
+        "recall": 0.33175,
+        "f1": 0.45390798700188134,
+        "support": 4000
+      },
+      "late_blight": {
+        "precision": 0.5213908610959402,
+        "recall": 0.5728,
+        "f1": 0.5458877346802631,
+        "support": 5000
+      }
+    },
+    "confusion_matrix": [
+      [
+        2873,
+        452,
+        1475
+      ],
+      [
+        1519,
+        1327,
+        1154
+      ],
+      [
+        2068,
+        68,
+        2864
+      ]
+    ]
+  },
+  "policy_results": {
+    "coverage": 0.67,
+    "accepted": 9246,
+    "rejected": 4554,
+    "selective_accuracy": 0.5559160718148388,
+    "accepted_error_rate": 0.4440839281851611,
+    "error_capture_rate": 0.3904394299287411,
+    "quality_rejections": 26
+  },
+  "confidence_policy_curve": {
+    "0.50": {
+      "coverage": 0.8765217391304347,
+      "accepted": 12096,
+      "rejected": 1704,
+      "selective_accuracy": 0.529265873015873,
+      "accepted_error_rate": 0.470734126984127,
+      "error_capture_rate": 0.15469121140142517,
+      "quality_rejections": 26
+    },
+    "0.60": {
+      "coverage": 0.8211594202898551,
+      "accepted": 11332,
+      "rejected": 2468,
+      "selective_accuracy": 0.5357394987645605,
+      "accepted_error_rate": 0.46426050123543944,
+      "error_capture_rate": 0.21897268408551068,
+      "quality_rejections": 26
+    },
+    "0.70": {
+      "coverage": 0.6980434782608695,
+      "accepted": 9633,
+      "rejected": 4167,
+      "selective_accuracy": 0.5511263365514377,
+      "accepted_error_rate": 0.4488736634485622,
+      "error_capture_rate": 0.3580760095011877,
+      "quality_rejections": 26
+    },
+    "0.80": {
+      "coverage": 0.5640579710144927,
+      "accepted": 7784,
+      "rejected": 6016,
+      "selective_accuracy": 0.57155704008222,
+      "accepted_error_rate": 0.4284429599177801,
+      "error_capture_rate": 0.5048990498812351,
+      "quality_rejections": 26
+    },
+    "0.90": {
+      "coverage": 0.40369565217391307,
+      "accepted": 5571,
+      "rejected": 8229,
+      "selective_accuracy": 0.6099443546939508,
+      "accepted_error_rate": 0.3900556453060492,
+      "error_capture_rate": 0.6774049881235155,
+      "quality_rejections": 26
+    },
+    "0.95": {
+      "coverage": 0.29340579710144926,
+      "accepted": 4049,
+      "rejected": 9751,
+      "selective_accuracy": 0.6396641145961965,
+      "accepted_error_rate": 0.3603358854038034,
+      "error_capture_rate": 0.7834026128266033,
+      "quality_rejections": 26
+    },
+    "0.98": {
+      "coverage": 0.1872463768115942,
+      "accepted": 2584,
+      "rejected": 11216,
+      "selective_accuracy": 0.6919504643962848,
+      "accepted_error_rate": 0.3080495356037152,
+      "error_capture_rate": 0.8818289786223278,
+      "quality_rejections": 26
+    },
+    "0.99": {
+      "coverage": 0.12811594202898552,
+      "accepted": 1768,
+      "rejected": 12032,
+      "selective_accuracy": 0.7341628959276018,
+      "accepted_error_rate": 0.2658371040723982,
+      "error_capture_rate": 0.9302256532066508,
+      "quality_rejections": 26
+    }
+  },
+  "expected_calibration_error": 0.28895112769975173,
+  "by_source": {
+    "bari_bd": {
+      "accuracy": 0.041666666666666664,
+      "macro_f1": 0.031746031746031744,
+      "per_class": {
+        "early_blight": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "healthy": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 4
+        },
+        "late_blight": {
+          "precision": 1.0,
+          "recall": 0.05,
+          "f1": 0.09523809523809523,
+          "support": 20
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          0,
+          0
+        ],
+        [
+          19,
+          0,
+          1
+        ]
+      ],
+      "policy_results": {
+        "coverage": 0.9583333333333334,
+        "accepted": 23,
+        "rejected": 1,
+        "selective_accuracy": 0.0,
+        "accepted_error_rate": 1.0,
+        "error_capture_rate": 0.0,
+        "quality_rejections": 0
+      }
+    },
+    "pldd_up": {
+      "accuracy": 0.5530561445560984,
+      "macro_f1": 0.5481145530551083,
+      "per_class": {
+        "early_blight": {
+          "precision": 0.4645585738539898,
+          "recall": 0.575446898002103,
+          "f1": 0.5140911225927666,
+          "support": 3804
+        },
+        "healthy": {
+          "precision": 0.7142022209234365,
+          "recall": 0.40787716955941256,
+          "f1": 0.5192266836626301,
+          "support": 2996
+        },
+        "late_blight": {
+          "precision": 0.5849909584086799,
+          "recall": 0.6394860390412651,
+          "f1": 0.611025852909928,
+          "support": 4047
+        }
+      },
+      "confusion_matrix": [
+        [
+          2189,
+          424,
+          1191
+        ],
+        [
+          1129,
+          1222,
+          645
+        ],
+        [
+          1394,
+          65,
+          2588
+        ]
+      ],
+      "policy_results": {
+        "coverage": 0.6858117451829999,
+        "accepted": 7439,
+        "rejected": 3408,
+        "selective_accuracy": 0.5984675359591343,
+        "accepted_error_rate": 0.40153246404086573,
+        "error_capture_rate": 0.38386963696369636,
+        "quality_rejections": 26
+      }
+    },
+    "wb_field": {
+      "accuracy": 0.3632639125981564,
+      "macro_f1": 0.3208260210754187,
+      "per_class": {
+        "early_blight": {
+          "precision": 0.39652173913043476,
+          "recall": 0.6867469879518072,
+          "f1": 0.5027563395810364,
+          "support": 996
+        },
+        "healthy": {
+          "precision": 0.7720588235294118,
+          "recall": 0.105,
+          "f1": 0.18485915492957747,
+          "support": 1000
+        },
+        "late_blight": {
+          "precision": 0.25749063670411987,
+          "recall": 0.2947481243301179,
+          "f1": 0.2748625687156422,
+          "support": 933
+        }
+      },
+      "confusion_matrix": [
+        [
+          684,
+          28,
+          284
+        ],
+        [
+          386,
+          105,
+          509
+        ],
+        [
+          655,
+          3,
+          275
+        ]
+      ],
+      "policy_results": {
+        "coverage": 0.6090815978149539,
+        "accepted": 1784,
+        "rejected": 1145,
+        "selective_accuracy": 0.38565022421524664,
+        "accepted_error_rate": 0.6143497757847534,
+        "error_capture_rate": 0.4123324396782842,
+        "quality_rejections": 0
+      }
+    }
+  },
+  "confident_failures": [
+    {
+      "filename": "late_blight/pldd_up_late_blight_38629362a29dbe84.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9999667406082153,
+      "margin": 0.9999346733093262,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_21815243d006dd74.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9999655485153198,
+      "margin": 0.9999313354492188,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/bari_bd_late_blight_3b3156e5e928a9eb.jpg",
+      "source": "bari_bd",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9999016523361206,
+      "margin": 0.999830424785614,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/pldd_up_healthy_336743d98c3a8f64.jpg",
+      "source": "pldd_up",
+      "actual": "healthy",
+      "predicted": "early_blight",
+      "confidence": 0.999884843826294,
+      "margin": 0.9997878074645996,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_14cc22aa146b71d8.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9998778104782104,
+      "margin": 0.9997610449790955,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_09218e4af1c63a70.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9998760223388672,
+      "margin": 0.999754786491394,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_5233648dcd57cebe.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9998428821563721,
+      "margin": 0.9996903538703918,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_43964d8c005de39c.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9998296499252319,
+      "margin": 0.9996611475944519,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_988a2ec79fd0721c.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9998083710670471,
+      "margin": 0.9996944665908813,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_c31ea55a946ce9a3.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9998027682304382,
+      "margin": 0.9996114373207092,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_e22fe97941425b1b.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.999796450138092,
+      "margin": 0.9995952248573303,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_0d3e4a6f9f7ba076.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9997952580451965,
+      "margin": 0.9995993375778198,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/bari_bd_healthy_b4b774205b5bd072.jpg",
+      "source": "bari_bd",
+      "actual": "healthy",
+      "predicted": "early_blight",
+      "confidence": 0.9997770190238953,
+      "margin": 0.9995991587638855,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/pldd_up_healthy_5a1d70b3a7b621c4.jpg",
+      "source": "pldd_up",
+      "actual": "healthy",
+      "predicted": "early_blight",
+      "confidence": 0.9997738003730774,
+      "margin": 0.9995534420013428,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_c295d27e740e4998.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9997430443763733,
+      "margin": 0.9995009899139404,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/pldd_up_healthy_1d3a2d58f9b9041e.jpg",
+      "source": "pldd_up",
+      "actual": "healthy",
+      "predicted": "early_blight",
+      "confidence": 0.9997342228889465,
+      "margin": 0.9995362758636475,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/wb_field_late_blight_a4048da36c5d0420.jpg",
+      "source": "wb_field",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.999731719493866,
+      "margin": 0.9994643926620483,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/wb_field_late_blight_f16e30a9983e5c23.jpg",
+      "source": "wb_field",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.999731719493866,
+      "margin": 0.9994639754295349,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_71330436366f579d.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9996877908706665,
+      "margin": 0.999398946762085,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/wb_field_late_blight_986afc9ca1f03d85.jpg",
+      "source": "wb_field",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.999663233757019,
+      "margin": 0.9993265867233276,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/pldd_up_healthy_98f99dee8449e0a8.jpg",
+      "source": "pldd_up",
+      "actual": "healthy",
+      "predicted": "late_blight",
+      "confidence": 0.9996464252471924,
+      "margin": 0.9992955923080444,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/wb_field_late_blight_5b0b272641be87da.jpg",
+      "source": "wb_field",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9996174573898315,
+      "margin": 0.9992362856864929,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_d0d5563a28897f42.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9996022582054138,
+      "margin": 0.9993572235107422,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_7a0428cd9db47040.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9995922446250916,
+      "margin": 0.9991976022720337,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_1f5da86b93da75fd.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9995891451835632,
+      "margin": 0.9991812109947205,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_37bf96ff5c7bd6d9.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9995790123939514,
+      "margin": 0.999171257019043,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_4e8c083a0f7c7575.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9995669722557068,
+      "margin": 0.9991339445114136,
+      "quality_issues": []
+    },
+    {
+      "filename": "early_blight/pldd_up_early_blight_fb3569d0a7711df2.jpg",
+      "source": "pldd_up",
+      "actual": "early_blight",
+      "predicted": "late_blight",
+      "confidence": 0.9995627999305725,
+      "margin": 0.99917072057724,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/bari_bd_late_blight_76ec563efff07711.jpg",
+      "source": "bari_bd",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9995453953742981,
+      "margin": 0.9992111921310425,
+      "quality_issues": []
+    },
+    {
+      "filename": "early_blight/pldd_up_early_blight_1148837b237d5abd.jpg",
+      "source": "pldd_up",
+      "actual": "early_blight",
+      "predicted": "late_blight",
+      "confidence": 0.9995365142822266,
+      "margin": 0.9991911053657532,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/pldd_up_healthy_959e5ec43c294d0d.jpg",
+      "source": "pldd_up",
+      "actual": "healthy",
+      "predicted": "early_blight",
+      "confidence": 0.9995152950286865,
+      "margin": 0.9991381764411926,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_805b5c2d1eaccb0e.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9994957447052002,
+      "margin": 0.9989970922470093,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/wb_field_late_blight_26312e7fbb5f091c.jpg",
+      "source": "wb_field",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9994951486587524,
+      "margin": 0.9989902377128601,
+      "quality_issues": []
+    },
+    {
+      "filename": "early_blight/pldd_up_early_blight_88577fc9951cfc83.jpg",
+      "source": "pldd_up",
+      "actual": "early_blight",
+      "predicted": "late_blight",
+      "confidence": 0.9994795918464661,
+      "margin": 0.9990458488464355,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_60e1d2cfcdb2a690.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9994681477546692,
+      "margin": 0.9989565014839172,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/wb_field_late_blight_fdaa3cb5dafd0521.jpg",
+      "source": "wb_field",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9994334578514099,
+      "margin": 0.998867928981781,
+      "quality_issues": []
+    },
+    {
+      "filename": "early_blight/wb_field_early_blight_1b5bce87b31f7cbc.jpg",
+      "source": "wb_field",
+      "actual": "early_blight",
+      "predicted": "late_blight",
+      "confidence": 0.9994255304336548,
+      "margin": 0.9988597631454468,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_bb325078660def07.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9994206428527832,
+      "margin": 0.9988718628883362,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_26ea558cf890a981.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9994089603424072,
+      "margin": 0.9989303350448608,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_51afa7174d296999.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9993997812271118,
+      "margin": 0.9988020658493042,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/bari_bd_healthy_b275bbad5e39cf87.jpg",
+      "source": "bari_bd",
+      "actual": "healthy",
+      "predicted": "early_blight",
+      "confidence": 0.9993934631347656,
+      "margin": 0.9989131689071655,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/wb_field_healthy_35a2cbee296963c1.jpg",
+      "source": "wb_field",
+      "actual": "healthy",
+      "predicted": "late_blight",
+      "confidence": 0.9993783235549927,
+      "margin": 0.99876469373703,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_cce31a5a4bf56344.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9993775486946106,
+      "margin": 0.9987696409225464,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_241b5d65e9a7764b.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9993732571601868,
+      "margin": 0.9987473487854004,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/pldd_up_healthy_cdfb22bda842a109.jpg",
+      "source": "pldd_up",
+      "actual": "healthy",
+      "predicted": "early_blight",
+      "confidence": 0.9993687272071838,
+      "margin": 0.9989423751831055,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_b5b35c7bdfe6c2e3.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9993672966957092,
+      "margin": 0.998963475227356,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_2c97298498d3979f.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9993288516998291,
+      "margin": 0.9987041354179382,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/wb_field_late_blight_b7a8c651b759d873.jpg",
+      "source": "wb_field",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9993141889572144,
+      "margin": 0.9986931085586548,
+      "quality_issues": []
+    },
+    {
+      "filename": "late_blight/pldd_up_late_blight_e8815dcba051f5c0.jpg",
+      "source": "pldd_up",
+      "actual": "late_blight",
+      "predicted": "early_blight",
+      "confidence": 0.9992955923080444,
+      "margin": 0.9985963702201843,
+      "quality_issues": []
+    },
+    {
+      "filename": "healthy/pldd_up_healthy_9e15cf0544675898.jpg",
+      "source": "pldd_up",
+      "actual": "healthy",
+      "predicted": "early_blight",
+      "confidence": 0.9992899894714355,
+      "margin": 0.998585045337677,
+      "quality_issues": []
+    }
+  ],
+  "limitations": [
+    "Source labels have not yet been fully audited by a plant pathologist.",
+    "The manifest does not identify farms, so farm-held-out evaluation is not possible.",
+    "This three-class classifier cannot prove that an uploaded image contains a potato leaf."
+  ]
+}

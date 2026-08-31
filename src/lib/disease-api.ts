@@ -5,6 +5,9 @@ export interface DiseaseResult {
   labels: { en: string; bn: string };
   confidence: number;
   quality_warning: boolean;
+  quality: { brightness: number; contrast: number; issues: string[] };
+  rejection_reasons: string[];
+  field_validated: boolean;
   needs_expert_review: boolean;
   probabilities: Record<string, number>;
   next_steps: { en: string[]; bn: string[] };
@@ -18,6 +21,10 @@ export interface ModelHealth {
   model?: string;
   model_version?: string;
   classes?: string[];
+  controlled_test_accuracy?: number;
+  regional_test_accuracy?: number;
+  regional_test_images?: number;
+  field_validated?: boolean;
   demo_only: boolean;
 }
 

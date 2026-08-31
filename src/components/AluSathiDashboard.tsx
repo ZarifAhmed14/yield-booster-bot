@@ -61,7 +61,9 @@ const COPY = {
     tomorrowRisk: "কাল সকালে কাছের গাছগুলোও দেখুন এবং নতুন ছবি তুলুন।",
     expertHealthy: "লক্ষণ ছড়ালে কৃষি বিশেষজ্ঞকে জানান।",
     expertRisk: "রাসায়নিক ব্যবহারের আগে কৃষি বিশেষজ্ঞের পরামর্শ নিন।",
+    todayUnknown: "দিনের আলোতে পাঁচ জায়গার পরিষ্কার ছবি আবার তুলুন।", tomorrowUnknown: "এই ফল দেখে কোনো চিকিৎসার সিদ্ধান্ত নেবেন না।", expertUnknown: "আক্রান্ত গাছ কৃষি বিশেষজ্ঞকে দেখান।",
     why: "আলুসাথী কেন এমন বলল?", confidence: "AI-এর মিল", limitations: "এই ফল সহায়তার জন্য। নিশ্চিত রোগ নির্ণয় নয়।",
+    fieldValidationPending: "মাঠের পরীক্ষায় AI এখনো যথেষ্ট নির্ভরযোগ্য নয়। তাই নিরাপত্তার জন্য রোগের নাম দেখানো হয়নি।",
     listen: "শুনুন", stop: "বন্ধ করুন", newScan: "নতুন ছবি",
     diaryKicker: "আমার জমি", diaryTitle: "আগের পরীক্ষাগুলো",
     diaryBody: "ফল নিজে থেকে এই ফোনে সেভ হয়। কোনো অ্যাকাউন্ট লাগে না।",
@@ -76,8 +78,8 @@ const COPY = {
     sourceTitle: "ভরসাযোগ্য তথ্য",
     sourceBody: "আবহাওয়া ও মাঠের করণীয় BAMIS, BARI ও কৃষি তথ্য সার্ভিসের প্রকাশিত তথ্যের ভিত্তিতে সহজ করা হয়েছে।",
     aboutTitle: "এই AI সম্পর্কে",
-    aboutBody: "বর্তমান মডেল অনলাইন আলু-পাতার ছবিতে প্রশিক্ষিত ও পরীক্ষিত। বাংলাদেশের নতুন মৌসুমের মাঠের ছবি দিয়ে আলাদা পরীক্ষা এখনও বাকি।",
-    modelReady: "AI প্রস্তুত", modelMissing: "AI সংযোগ নেই", modelVersion: "মডেল",
+    aboutBody: "১৩,৮০০টি আলাদা আঞ্চলিক ছবির পরীক্ষায় এই AI প্রতি ১০০টির মধ্যে প্রায় ৫১টি ঠিক চিনেছে। তাই এটি এখন শুধু গবেষণার জন্য; কৃষকের রোগ নির্ণয়ের জন্য নয়।",
+    modelReady: "AI প্রস্তুত", modelResearch: "গবেষণা পর্যায়", modelMissing: "AI সংযোগ নেই", modelVersion: "মডেল", regionalTest: "আঞ্চলিক পরীক্ষা",
     privacy: "আপনার ছবি প্রশিক্ষণে ব্যবহার করা হয় না।", footer: "আলুসাথী · কৃষকের সিদ্ধান্ত, AI-এর সহায়তা",
   },
   en: {
@@ -111,7 +113,9 @@ const COPY = {
     tomorrowRisk: "Check nearby plants tomorrow morning and take new photos.",
     expertHealthy: "Contact an agricultural expert if symptoms spread.",
     expertRisk: "Confirm with an agricultural expert before using chemicals.",
+    todayUnknown: "Retake clear daylight photos from all five places.", tomorrowUnknown: "Do not make a treatment decision from these results.", expertUnknown: "Show affected plants to an agricultural expert.",
     why: "Why did AluSathi say this?", confidence: "AI match", limitations: "This result supports decisions. It is not a confirmed diagnosis.",
+    fieldValidationPending: "Field testing shows that this AI is not reliable enough yet. The disease name is hidden for safety.",
     listen: "Listen", stop: "Stop", newScan: "New scan",
     diaryKicker: "My field", diaryTitle: "Previous checks", diaryBody: "Results save automatically on this phone. No account is required.",
     emptyDiary: "No checks saved yet", emptyDiaryBody: "Your first completed check will appear here.",
@@ -125,8 +129,8 @@ const COPY = {
     sourceTitle: "Trusted information",
     sourceBody: "Weather and field actions are simplified from published BAMIS, BARI and Agricultural Information Service information.",
     aboutTitle: "About this AI",
-    aboutBody: "The current model was trained and tested on online potato-leaf photographs. Separate testing with new-season Bangladesh field photographs is still required.",
-    modelReady: "AI ready", modelMissing: "AI disconnected", modelVersion: "Model",
+    aboutBody: "On 13,800 separate regional images, this AI identified about 51 in every 100 correctly. It is therefore research-only, not ready for farmer diagnosis.",
+    modelReady: "AI ready", modelResearch: "Research stage", modelMissing: "AI disconnected", modelVersion: "Model", regionalTest: "Regional test",
     privacy: "Your photograph is not used for training.", footer: "AluSathi · Farmer decisions, assisted by AI",
   },
 } as const;
@@ -336,7 +340,7 @@ export default function AluSathiDashboard() {
       <section id="diary" className="diary-section scroll-mt-20"><div className="app-shell py-16 sm:py-24"><div className="section-heading light"><div><p className="section-kicker"><History size={16} />{copy.diaryKicker}</p><h2>{copy.diaryTitle}</h2><p>{copy.diaryBody}</p></div>{diary.length > 0 && <button className="text-button" onClick={() => removeDiary()}><Trash2 size={16} />{copy.clearAll}</button>}</div>{diary.length === 0 ? <div className="empty-diary"><span><History size={31} /></span><h3>{copy.emptyDiary}</h3><p>{copy.emptyDiaryBody}</p><button className="secondary-main" onClick={() => startScan("quick")}><Camera size={18} />{copy.quick}</button></div> : <div className="diary-grid">{diary.map((entry) => <DiaryCard key={entry.id} entry={entry} language={language} copy={copy} onDelete={() => removeDiary(entry.id)} />)}</div>}</div></section>
 
       <section id="help" className="app-shell scroll-mt-20 py-16 sm:py-24"><div className="section-heading"><div><p className="section-kicker"><HelpCircle size={16} />{copy.helpKicker}</p><h2>{copy.helpTitle}</h2></div></div><div className="help-grid">{copy.helpCards.map(([title, body], index) => <article key={title}><span>{index + 1}</span><h3>{title}</h3><p>{body}</p><button onClick={() => speak(`${title}. ${body}`)}><Ear size={17} />{copy.listen}</button></article>)}</div>
-        <div className="trust-grid"><article className="source-card"><BookOpen /><div><h3>{copy.sourceTitle}</h3><p>{copy.sourceBody}</p><div className="source-links"><a href="https://www.bamis.gov.bd/en/diseases/1/all/52/" target="_blank" rel="noreferrer">BAMIS</a><a href="https://bari.gov.bd/" target="_blank" rel="noreferrer">BARI</a><a href="https://ais.gov.bd/" target="_blank" rel="noreferrer">AIS</a></div></div></article><article className="model-card"><ShieldCheck /><div><div className="flex flex-wrap items-center gap-2"><h3>{copy.aboutTitle}</h3><span className={`model-status ${modelHealth?.status === "ready" ? "ready" : "missing"}`}>{modelHealth?.status === "ready" ? copy.modelReady : copy.modelMissing}</span></div><p>{copy.aboutBody}</p><dl><div><dt>{copy.modelVersion}</dt><dd>{modelHealth?.model_version || modelHealth?.model || "MobileNetV3-Small"}</dd></div><div><dt>{language === "bn" ? "শ্রেণি" : "Classes"}</dt><dd>{language === "bn" ? "সুস্থ · আগাম ধসা · নাবি ধসা" : "Healthy · Early blight · Late blight"}</dd></div></dl></div></article></div>
+        <div className="trust-grid"><article className="source-card"><BookOpen /><div><h3>{copy.sourceTitle}</h3><p>{copy.sourceBody}</p><div className="source-links"><a href="https://www.bamis.gov.bd/en/diseases/1/all/52/" target="_blank" rel="noreferrer">BAMIS</a><a href="https://bari.gov.bd/" target="_blank" rel="noreferrer">BARI</a><a href="https://ais.gov.bd/" target="_blank" rel="noreferrer">AIS</a></div></div></article><article className="model-card"><ShieldCheck /><div><div className="flex flex-wrap items-center gap-2"><h3>{copy.aboutTitle}</h3><span className={`model-status ${modelHealth?.status !== "ready" ? "missing" : modelHealth.field_validated ? "ready" : "research"}`}>{modelHealth?.status !== "ready" ? copy.modelMissing : modelHealth.field_validated ? copy.modelReady : copy.modelResearch}</span></div><p>{copy.aboutBody}</p><dl><div><dt>{copy.modelVersion}</dt><dd>{modelHealth?.model_version || modelHealth?.model || "MobileNetV3-Small"}</dd></div><div><dt>{copy.regionalTest}</dt><dd>{modelHealth?.regional_test_accuracy ? `${Math.round(modelHealth.regional_test_accuracy * 100)}% · ${modelHealth.regional_test_images?.toLocaleString(language === "bn" ? "bn-BD" : "en-GB")} ${language === "bn" ? "ছবি" : "images"}` : language === "bn" ? "তথ্য নেই" : "Unavailable"}</dd></div><div><dt>{language === "bn" ? "শ্রেণি" : "Classes"}</dt><dd>{language === "bn" ? "সুস্থ · আগাম ধসা · নাবি ধসা" : "Healthy · Early blight · Late blight"}</dd></div></dl></div></article></div>
       </section>
     </main>
 
@@ -357,7 +361,7 @@ function SingleResult({ result, copy, speak, speaking }: { result: DiseaseResult
   const status: Risk = result.label === "healthy" ? "healthy" : result.label === "unknown" ? "uncertain" : "watch";
   const title = labelText(result.label, copy); const risky = status !== "healthy";
   const actions = [risky ? copy.todayRisk : copy.todayHealthy, risky ? copy.tomorrowRisk : copy.tomorrowHealthy, risky ? copy.expertRisk : copy.expertHealthy];
-  return <div className="result-content animate-rise"><div className={`result-symbol ${status}`}>{status === "healthy" ? <Check /> : <AlertTriangle />}</div><p className="result-kicker">{copy.result}</p><h3>{title}</h3><button className="listen-button" onClick={() => speak(`${title}. ${actions.join(" ")}`)}><Mic2 size={18} />{speaking ? copy.stop : copy.listen}</button><div className="action-list">{[copy.now, copy.tomorrow, copy.helpAction].map((heading, index) => <article key={heading}><span>{index + 1}</span><div><strong>{heading}</strong><p>{actions[index]}</p></div></article>)}</div><details className="why-card"><summary>{copy.why}<ChevronDown size={17} /></summary><div><p>{copy.confidence}: <strong>{Math.round(result.confidence * 100)}%</strong></p><div className="confidence-track"><span style={{ width: `${Math.round(result.confidence * 100)}%` }} /></div><p className="mt-3">{copy.limitations}</p></div></details></div>;
+  return <div className="result-content animate-rise"><div className={`result-symbol ${status}`}>{status === "healthy" ? <Check /> : <AlertTriangle />}</div><p className="result-kicker">{copy.result}</p><h3>{title}</h3><button className="listen-button" onClick={() => speak(`${title}. ${actions.join(" ")}`)}><Mic2 size={18} />{speaking ? copy.stop : copy.listen}</button><div className="action-list">{[copy.now, copy.tomorrow, copy.helpAction].map((heading, index) => <article key={heading}><span>{index + 1}</span><div><strong>{heading}</strong><p>{actions[index]}</p></div></article>)}</div><details className="why-card"><summary>{copy.why}<ChevronDown size={17} /></summary><div>{result.field_validated ? <><p>{copy.confidence}: <strong>{Math.round(result.confidence * 100)}%</strong></p><div className="confidence-track"><span style={{ width: `${Math.round(result.confidence * 100)}%` }} /></div><p className="mt-3">{copy.limitations}</p></> : <p>{copy.fieldValidationPending}</p>}</div></details></div>;
 }
 
 function FieldResult({ results, risk, weather, copy, speak, speaking, restart }: { results: DiseaseResult[]; risk: Risk; weather: WeatherData | null; copy: Copy; speak: (text: string) => void; speaking: boolean; restart: () => void }) {
@@ -365,7 +369,9 @@ function FieldResult({ results, risk, weather, copy, speak, speaking, restart }:
   const clear = results.filter((item) => item.label === "healthy").length;
   const uncertain = results.filter((item) => item.label === "unknown").length;
   const title = riskText(risk, copy); const risky = risk === "watch" || risk === "urgent";
-  const actions = [risky ? copy.todayRisk : copy.todayHealthy, risky ? copy.tomorrowRisk : copy.tomorrowHealthy, risky ? copy.expertRisk : copy.expertHealthy];
+  const actions = risk === "uncertain"
+    ? [copy.todayUnknown, copy.tomorrowUnknown, copy.expertUnknown]
+    : [risky ? copy.todayRisk : copy.todayHealthy, risky ? copy.tomorrowRisk : copy.tomorrowHealthy, risky ? copy.expertRisk : copy.expertHealthy];
   return <div className="result-content field-summary animate-rise"><div className={`result-symbol ${risk}`}>{risk === "healthy" ? <Check /> : <AlertTriangle />}</div><p className="result-kicker">{copy.full}</p><h3>{title}</h3><button className="listen-button" onClick={() => speak(`${title}. ${actions.join(" ")}`)}><Mic2 size={18} />{speaking ? copy.stop : copy.listen}</button><div className="field-counts"><div className="risk"><strong>{affected}</strong><span>{copy.affected}</span></div><div className="clear"><strong>{clear}</strong><span>{copy.clear}</span></div><div className="unknown"><strong>{uncertain}</strong><span>{copy.uncertain}</span></div></div>{weather && <p className="weather-context"><CloudRain size={18} />{weather.humidity}% {copy.humidity} · {weather.temperature}°C</p>}<div className="action-list compact">{[copy.now, copy.tomorrow, copy.helpAction].map((heading, index) => <article key={heading}><span>{index + 1}</span><div><strong>{heading}</strong><p>{actions[index]}</p></div></article>)}</div><button className="secondary-main w-full justify-center" onClick={restart}><RefreshCw size={18} />{copy.newScan}</button></div>;
 }
 

@@ -27,6 +27,8 @@ npm run ml:train
 
 This is an online-image screening model, not a field-validated diagnostic system. Predictions show uncertainty, and chemical decisions require confirmation from an agricultural expert. Farmer photos must not be reused for training without consent.
 
+The current checkpoint is connected but intentionally locked to uncertain results: external evaluation on 13,800 regional images reached only 51.19% accuracy. See [PHASE1_EVALUATION.md](PHASE1_EVALUATION.md) for the go/no-go decision, confusion-matrix summary and reproduction command.
+
 The API reports the exact loaded artifact and version at `GET /health`. Override the checked-in artifact with `ALUSATHI_MODEL`, `ALUSATHI_MODEL_METADATA` and `ALUSATHI_MODEL_VERSION` when a replacement PyTorch checkpoint is available.
 
 ## Checks

@@ -215,6 +215,7 @@
   .source-links a { @apply rounded-full bg-white/15 px-3 py-1.5 text-xs font-extrabold hover:bg-white/25; }
   .model-status { @apply rounded-full px-2.5 py-1 text-[11px] font-extrabold; }
   .model-status.ready { @apply bg-emerald-100 text-emerald-900; }
+  .model-status.research { @apply bg-amber-100 text-amber-950; }
   .model-status.missing { @apply bg-amber-100 text-amber-950; }
   .model-card dl { @apply mt-5 grid gap-2 sm:grid-cols-2; }
   .model-card dl > div { @apply rounded-xl bg-white/60 p-3; }

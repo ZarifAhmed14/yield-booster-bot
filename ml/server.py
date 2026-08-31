@@ -11,13 +11,17 @@ from pathlib import Path
 import torch
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
-from PIL import Image, ImageStat, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError
 from torchvision import models, transforms
+
+from ml.inference_policy import CONFIDENCE_THRESHOLD, MARGIN_THRESHOLD, image_quality, should_reject
 
 
 MODEL_PATH = Path(os.getenv("ALUSATHI_MODEL", "ml/artifacts/potato_mobilenet_v3.pt"))
 MODEL_METADATA_PATH = Path(os.getenv("ALUSATHI_MODEL_METADATA", "ml/artifacts/potato_mobilenet_v3.metrics.json"))
+REGIONAL_EVALUATION_PATH = Path(os.getenv("ALUSATHI_REGIONAL_EVALUATION", "ml/artifacts/regional_evaluation.json"))
 MODEL_VERSION = os.getenv("ALUSATHI_MODEL_VERSION", "plantvillage-mobilenet-v3-2026.1")
+FIELD_VALIDATED = os.getenv("ALUSATHI_FIELD_VALIDATED", "false").lower() == "true"
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
@@ -53,6 +57,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = None
 class_names: list[str] = []
 model_metadata: dict = {}
+regional_evaluation: dict = {}
 preprocess = transforms.Compose([
     transforms.Resize(256),
     transforms.CenterCrop(224),
@@ -62,7 +67,7 @@ preprocess = transforms.Compose([
 
 
 def load_model() -> None:
-    global model, class_names, model_metadata
+    global model, class_names, model_metadata, regional_evaluation
     if not MODEL_PATH.exists():
         return
     checkpoint = torch.load(MODEL_PATH, map_location=device, weights_only=True)
@@ -75,6 +80,9 @@ def load_model() -> None:
     if MODEL_METADATA_PATH.exists():
         with MODEL_METADATA_PATH.open("r", encoding="utf-8") as metadata_file:
             model_metadata = json.load(metadata_file)
+    if REGIONAL_EVALUATION_PATH.exists():
+        with REGIONAL_EVALUATION_PATH.open("r", encoding="utf-8") as evaluation_file:
+            regional_evaluation = json.load(evaluation_file)
 
 
 @app.on_event("startup")
@@ -111,6 +119,10 @@ def health() -> dict:
         "model_version": MODEL_VERSION,
         "classes": class_names,
         "test_accuracy": model_metadata.get("test", {}).get("accuracy"),
+        "controlled_test_accuracy": model_metadata.get("test", {}).get("accuracy"),
+        "regional_test_accuracy": regional_evaluation.get("raw", {}).get("accuracy"),
+        "regional_test_images": regional_evaluation.get("images"),
+        "field_validated": FIELD_VALIDATED,
         "demo_only": True,
     }
 
@@ -143,10 +155,8 @@ async def predict(request: Request, file: UploadFile = File(...)) -> dict:
             image = source.convert("RGB")
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
         raise HTTPException(400, "The uploaded file is not a safe, readable image.")
-    grayscale = image.convert("L").resize((128, 128))
-    contrast = ImageStat.Stat(grayscale).stddev[0]
-    brightness = ImageStat.Stat(grayscale).mean[0]
-    quality_warning = contrast < 18 or brightness < 35 or brightness > 225
+    quality = image_quality(image)
+    quality_warning = bool(quality["issues"])
 
     async with inference_slots:
         with torch.inference_mode():
@@ -155,7 +165,14 @@ async def predict(request: Request, file: UploadFile = File(...)) -> dict:
     confidence = float(sorted_values[0])
     margin = float(sorted_values[0] - sorted_values[1])
     predicted = class_names[int(sorted_indexes[0])]
-    uncertain = quality_warning or confidence < 0.72 or margin < 0.18
+    rejection_reasons = list(quality["issues"])
+    if confidence < CONFIDENCE_THRESHOLD:
+        rejection_reasons.append("low_confidence")
+    if margin < MARGIN_THRESHOLD:
+        rejection_reasons.append("close_competing_predictions")
+    if not FIELD_VALIDATED:
+        rejection_reasons.append("field_validation_pending")
+    uncertain = should_reject(confidence, margin, quality["issues"]) or not FIELD_VALIDATED
     label = "unknown" if uncertain else predicted
 
     return {
@@ -163,11 +180,14 @@ async def predict(request: Request, file: UploadFile = File(...)) -> dict:
         "labels": LABELS[label],
         "confidence": round(confidence, 4),
         "quality_warning": quality_warning,
+        "quality": quality,
+        "rejection_reasons": rejection_reasons,
+        "field_validated": FIELD_VALIDATED,
         # Demo data has field-domain and false-negative risk, so every result stays advisory.
         "needs_expert_review": True,
         "probabilities": {class_names[index]: round(float(probabilities[index]), 4) for index in range(len(class_names))},
         "next_steps": NEXT_STEPS[label],
-        "model_scope": "Online-image screening model; Bangladesh field validation is pending.",
+        "model_scope": "PlantVillage-trained research model; regional testing did not meet the field-use threshold.",
         "treatment_status": "Screening guidance only—confirm chemical decisions with an agricultural expert.",
     }
 
