@@ -13,6 +13,7 @@ export interface DiseaseResult {
   next_steps: { en: string[]; bn: string[] };
   model_scope: string;
   treatment_status: string;
+  inference_mode?: "online" | "offline";
 }
 
 export interface ModelHealth {
@@ -36,7 +37,7 @@ export async function scanPotatoLeaf(file: File): Promise<DiseaseResult> {
   const response = await fetch(`${API_BASE_URL}/disease/predict`, { method: "POST", body });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.detail || "The scan could not be completed.");
-  return payload;
+  return { ...payload, inference_mode: "online" };
 }
 
 export async function getModelHealth(): Promise<ModelHealth | null> {

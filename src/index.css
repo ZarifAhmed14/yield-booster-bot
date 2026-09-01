@@ -105,6 +105,20 @@
   .weather-icon.risk { @apply bg-amber-100 text-amber-900; }
   .district-picker { @apply flex min-h-11 items-center gap-2 rounded-xl border border-[#112a20]/10 bg-[#f7f1df] px-3 text-sm font-bold; }
   .district-picker select { @apply appearance-none bg-transparent pr-1 outline-none; }
+  .extreme-weather { @apply border-b border-red-950/10 bg-[#8f2f26] text-white; background-image: radial-gradient(circle at 90% 0%, rgba(242,193,78,.18), transparent 30%); }
+  .alert-heading { @apply mb-4 flex items-center justify-between gap-4; }
+  .alert-heading p { @apply text-xs font-extrabold uppercase tracking-[.16em] text-[#f2c14e]; }
+  .alert-heading h2 { @apply mt-1 text-2xl font-bold; font-family: "Fraunces", "Hind Siliguri", serif; }
+  .font-bangla .alert-heading h2 { font-family: "Hind Siliguri", sans-serif; }
+  .alert-heading > svg { @apply h-8 w-8 text-[#f2c14e]; }
+  .weather-alert-grid { @apply grid gap-3 lg:grid-cols-3; }
+  .weather-alert-grid article { @apply flex gap-3 rounded-2xl border border-white/15 bg-white/[.08] p-4; }
+  .weather-alert-grid article > span { @apply grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#f2c14e] text-[#112a20]; }
+  .weather-alert-grid article > span svg { @apply h-5 w-5; }
+  .weather-alert-grid small { @apply text-[11px] font-bold uppercase tracking-wide text-white/55; }
+  .weather-alert-grid h3 { @apply mt-1 font-extrabold; }
+  .weather-alert-grid p { @apply mt-1 text-sm leading-6 text-white/75; }
+  .weather-alert-grid button { @apply mt-3 inline-flex min-h-10 items-center gap-2 rounded-full bg-white/10 px-3 text-xs font-extrabold hover:bg-white/20; }
 
   .section-heading { @apply mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end; }
   .section-heading h2 { @apply mt-2 text-4xl font-bold leading-tight tracking-[-.04em] text-[#112a20] sm:text-5xl; font-family: "Fraunces", "Hind Siliguri", serif; }
@@ -144,6 +158,8 @@
   .result-empty > span { @apply grid h-20 w-20 place-items-center rounded-full border border-dashed border-[#112a20]/20 bg-white text-[#24724d]/45; }
   .result-empty h3 { @apply mt-5 text-2xl font-bold text-[#112a20]; font-family: "Fraunces", "Hind Siliguri", serif; }
   .result-empty p { @apply mt-3 max-w-sm leading-7 text-[#112a20]/55; }
+  .photo-accepted > span { @apply border-0 bg-emerald-100 text-emerald-800; }
+  .offline-result { @apply mt-4 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-2 text-xs font-extrabold text-amber-950; }
   .next-button { @apply mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#e8ad2e] px-5 font-extrabold text-[#112a20] transition hover:bg-[#f2c14e]; }
 
   .result-content { @apply mx-auto max-w-lg; }
@@ -199,7 +215,10 @@
   .empty-diary h3 { @apply mt-5 text-2xl font-bold; }
   .empty-diary p { @apply mt-2 text-white/55; }
   .diary-grid { @apply grid gap-4 md:grid-cols-2 xl:grid-cols-3; }
-  .diary-card { @apply rounded-[1.5rem] border border-white/10 bg-white/[.07] p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/[.1]; }
+  .timeline-grid { @apply relative mx-auto max-w-4xl grid-cols-1 pl-8; }
+  .timeline-grid::before { content: ""; @apply absolute bottom-5 left-3 top-5 w-0.5 bg-white/15; }
+  .diary-card { @apply relative rounded-[1.5rem] border border-white/10 bg-white/[.07] p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/[.1]; }
+  .timeline-dot { @apply absolute -left-[2.08rem] top-7 h-4 w-4 rounded-full border-4 border-[#112a20] bg-[#f2c14e]; }
   .diary-card > div > button { @apply grid h-10 w-10 place-items-center rounded-xl text-white/40 hover:bg-white/10 hover:text-white; }
   .diary-status { @apply grid h-12 w-12 place-items-center rounded-xl; }
   .diary-status svg { @apply h-5 w-5; }
@@ -211,6 +230,11 @@
   .diary-card > div:nth-of-type(2) span { @apply inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/65; }
   .diary-card > div:nth-of-type(2) svg { @apply h-3.5 w-3.5; }
   .diary-card time { @apply mt-5 block border-t border-white/10 pt-4 text-xs font-semibold text-white/40; }
+  .trend-chip { @apply mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold; }
+  .trend-chip.first, .trend-chip.stable { @apply bg-white/10 text-white/70; }
+  .trend-chip.improving { @apply bg-emerald-400/20 text-emerald-300; }
+  .trend-chip.worsening { @apply bg-amber-400/20 text-amber-300; }
+  .recheck-button { @apply mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#f2c14e] px-4 text-sm font-extrabold text-[#112a20] hover:bg-[#ffd36b]; }
 
   .help-grid { @apply grid gap-4 md:grid-cols-3; }
   .help-grid article { @apply relative overflow-hidden rounded-[1.5rem] border border-[#112a20]/10 bg-[#fffdf7] p-6 shadow-[0_18px_45px_rgba(17,42,32,.06)]; }

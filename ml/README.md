@@ -2,6 +2,19 @@
 
 The demo fine-tunes MobileNetV3-Small on the three potato classes from the open PlantVillage dataset: early blight, healthy, and late blight.
 
+## Colab retraining
+
+Make a copy of the working notebook before retraining. In the copy, select a T4 GPU, mount Drive, clone this repository, and run:
+
+```python
+!pip install -q -r ml/requirements.txt
+!python ml/train.py --data /content/dataset --epochs 25 --batch-size 64
+```
+
+For honest evaluation, `/content/dataset` should contain `train`, `val`, and `test` folders, each containing `early_blight`, `healthy`, and `late_blight`. Keep images from the same farm, collection session, or video in only one split; otherwise near-duplicate images can make the score misleading. A flat three-class directory is still accepted for the older random-split workflow. The trainer now uses stronger field-style augmentation, fine-tunes six MobileNet blocks, applies label smoothing, and selects the checkpoint with the best validation macro-F1.
+
+After training, download `ml/artifacts/potato_mobilenet_v3.pt`, replace the repository artifact, then regenerate the offline model with `python ml/export_onnx.py`.
+
 ```powershell
 git clone --depth 1 --filter=blob:none --sparse https://github.com/spMohanty/PlantVillage-Dataset.git .ml-data/plantvillage
 cd .ml-data/plantvillage

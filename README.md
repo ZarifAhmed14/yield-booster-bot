@@ -1,6 +1,6 @@
 # AluSathi
 
-Bangla-first, mobile-friendly potato leaf screening for Bangladesh farmers. FieldWatch supports one-leaf checks, a guided five-location field check, weather context, voice guidance and a private on-device field diary.
+Bangla-first, mobile-friendly potato leaf screening for Bangladesh farmers. FieldWatch supports guided three-photo checks, a five-location field check, offline browser inference, extreme-weather messages, voice guidance and a private disease-progress timeline.
 
 Competition evidence, demo instructions and honest completion status are indexed in [`competition/README.md`](competition/README.md).
 
@@ -32,6 +32,15 @@ This is an online-image screening model, not a field-validated diagnostic system
 The current checkpoint is connected but intentionally locked to uncertain results: external evaluation on 13,800 regional images reached only 51.19% accuracy. See [PHASE1_EVALUATION.md](PHASE1_EVALUATION.md) for the go/no-go decision, confusion-matrix summary and reproduction command.
 
 The API reports the exact loaded artifact and version at `GET /health`. Override the checked-in artifact with `ALUSATHI_MODEL`, `ALUSATHI_MODEL_METADATA` and `ALUSATHI_MODEL_VERSION` when a replacement PyTorch checkpoint is available.
+
+The PWA precaches a browser-ready ONNX copy of the same checkpoint. Regenerate it after replacing the PyTorch model:
+
+```powershell
+.venv\Scripts\python.exe ml\export_onnx.py
+npm run build
+```
+
+Serve `dist` with `npm run preview` to verify installation and offline mode; service workers are disabled during normal Vite development.
 
 ## Checks
 

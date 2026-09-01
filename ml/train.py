@@ -15,9 +15,9 @@ from torchvision import models, transforms
 
 SEED = 42
 CLASS_DIRS = {
-    "early_blight": "Potato___Early_blight",
-    "healthy": "Potato___healthy",
-    "late_blight": "Potato___Late_blight",
+    "early_blight": ("early_blight", "Potato___Early_blight"),
+    "healthy": ("healthy", "Potato___healthy"),
+    "late_blight": ("late_blight", "Potato___Late_blight"),
 }
 
 
@@ -40,8 +40,23 @@ def split_samples(data_dir: Path) -> tuple[list, list, list, list[str]]:
     class_names = list(CLASS_DIRS)
     splits: dict[str, list[tuple[Path, int]]] = defaultdict(list)
 
+    if all((data_dir / name).is_dir() for name in ("train", "val", "test")):
+        for split_name in ("train", "val", "test"):
+            for label, class_name in enumerate(class_names):
+                split_root = data_dir / split_name
+                class_dir = next((split_root / name for name in CLASS_DIRS[class_name] if (split_root / name).is_dir()), None)
+                if class_dir is None:
+                    raise FileNotFoundError(f"Missing {split_name} folder for {class_name} in {data_dir}")
+                files = sorted(path for path in class_dir.iterdir() if path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"})
+                if not files:
+                    raise FileNotFoundError(f"No {split_name} images found for {class_name} in {data_dir}")
+                splits[split_name].extend((path, label) for path in files)
+        return splits["train"], splits["val"], splits["test"], class_names
+
     for label, class_name in enumerate(class_names):
-        class_dir = data_dir / CLASS_DIRS[class_name]
+        class_dir = next((data_dir / name for name in CLASS_DIRS[class_name] if (data_dir / name).is_dir()), None)
+        if class_dir is None:
+            raise FileNotFoundError(f"Missing folder for {class_name} in {data_dir}")
         files = sorted(path for path in class_dir.iterdir() if path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"})
         if not files:
             raise FileNotFoundError(f"No images found for {class_name} in {data_dir}")
@@ -64,7 +79,7 @@ def make_model(class_count: int) -> nn.Module:
     model = models.mobilenet_v3_small(weights=models.MobileNet_V3_Small_Weights.DEFAULT)
     for parameter in model.features.parameters():
         parameter.requires_grad = False
-    for block in model.features[-3:]:
+    for block in model.features[-6:]:
         for parameter in block.parameters():
             parameter.requires_grad = True
     model.classifier[3] = nn.Linear(model.classifier[3].in_features, class_count)
@@ -108,7 +123,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Fine-tune MobileNetV3 on PlantVillage potato leaves.")
     parser.add_argument("--data", type=Path, default=Path(".ml-data/plantvillage/raw/color"))
     parser.add_argument("--output", type=Path, default=Path("ml/artifacts/potato_mobilenet_v3.pt"))
-    parser.add_argument("--epochs", type=int, default=8)
+    parser.add_argument("--epochs", type=int, default=25)
     parser.add_argument("--batch-size", type=int, default=32)
     args = parser.parse_args()
 
@@ -121,12 +136,13 @@ def main() -> None:
     train_samples, val_samples, test_samples, class_names = split_samples(args.data)
     normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     train_transform = transforms.Compose([
-        transforms.RandomResizedCrop(224, scale=(0.72, 1.0)),
+        transforms.RandomResizedCrop(224, scale=(0.65, 1.0)),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(12),
-        transforms.ColorJitter(0.18, 0.18, 0.15, 0.04),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(0.25, 0.25, 0.20, 0.05),
         transforms.ToTensor(),
         normalize,
+        transforms.RandomErasing(p=0.15, scale=(0.02, 0.12)),
     ])
     eval_transform = transforms.Compose([
         transforms.Resize(256),
@@ -144,14 +160,14 @@ def main() -> None:
     model = make_model(len(class_names)).to(device)
     counts = torch.bincount(torch.tensor([label for _, label in train_samples]), minlength=len(class_names)).float()
     class_weights = (counts.sum() / (len(class_names) * counts)).to(device)
-    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.08)
     optimizer = torch.optim.AdamW([
-        {"params": model.features[-3:].parameters(), "lr": 1e-4},
-        {"params": model.classifier.parameters(), "lr": 8e-4},
+        {"params": model.features[-6:].parameters(), "lr": 3e-5},
+        {"params": model.classifier.parameters(), "lr": 3e-4},
     ], weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
-    best_accuracy = -1.0
+    best_score = -1.0
     best_state = None
     history = []
     print(f"Training {len(train_samples)} / validating {len(val_samples)} / testing {len(test_samples)} images on {device}.")
@@ -181,8 +197,8 @@ def main() -> None:
         }
         history.append(row)
         print(json.dumps(row))
-        if validation["accuracy"] > best_accuracy:
-            best_accuracy = validation["accuracy"]
+        if validation["macro_f1"] > best_score:
+            best_score = validation["macro_f1"]
             best_state = {key: value.detach().cpu() for key, value in model.state_dict().items()}
 
     if best_state is None:
