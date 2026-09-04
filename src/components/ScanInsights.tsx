@@ -1,0 +1,76 @@
+import { useMemo, useRef, useState } from "react";
+import { AlertTriangle, Share2, Printer, CloudRain, Undo2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { DiseaseResult } from "@/lib/disease-api";
+import type { WeatherData } from "@/lib/api";
+import { downloadFile, spreadOutlook } from "@/lib/farmer-tools";
+
+type Point = [number, number];
+function mask(points: Point[][]) {
+  const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 512;
+  const context = canvas.getContext("2d", { willReadFrequently: true })!;
+  context.fillStyle = "#fff";
+  for (const polygon of points) { context.beginPath(); polygon.forEach(([x, y], i) => i ? context.lineTo(x, y) : context.moveTo(x, y)); context.closePath(); context.fill(); }
+  return context.getImageData(0, 0, 512, 512).data;
+}
+
+function SeverityMeasure({ image, onMeasure }: { image: string; onMeasure: (percent: number | null) => void }) {
+  const { language } = useLanguage(); const bn = language === "bn";
+  const [outline, setOutline] = useState<Point[]>([]);
+  const [lesions, setLesions] = useState<Point[][]>([]);
+  const [stroke, setStroke] = useState<Point[]>([]);
+  const active = useRef<Point[]>([]);
+  function finish() {
+    const points = active.current; active.current = []; setStroke([]);
+    if (points.length < 3) return;
+    if (!outline.length) { setOutline(points); return; }
+    const next = [...lesions, points]; setLesions(next);
+    const leaf = mask([outline]); const damage = mask(next);
+    let leafPixels = 0, damagedPixels = 0;
+    for (let i = 3; i < leaf.length; i += 4) { if (leaf[i] > 128) { leafPixels++; if (damage[i] > 128) damagedPixels++; } }
+    onMeasure(leafPixels >= 1000 ? Math.round(damagedPixels / leafPixels * 1000) / 10 : null);
+  }
+  const point = (e: React.PointerEvent<SVGSVGElement>): Point => { const rect = e.currentTarget.getBoundingClientRect(); return [Math.max(0, Math.min(512, (e.clientX - rect.left) / rect.width * 512)), Math.max(0, Math.min(512, (e.clientY - rect.top) / rect.height * 512))]; };
+  return <details className="farmer-tool severity-tool"><summary>{bn ? "পাতার কতটা অংশে দাগ?" : "How much leaf area is marked?"}</summary><div className="tool-body">
+    <p>{bn ? "প্রথমে একটি পাতার চারপাশে আঙুল ঘুরিয়ে দাগ দিন। তারপর ক্ষতিগ্রস্ত অংশ ঘিরুন। একাধিক দাগ ঘেরা যাবে।" : "First trace around one leaf. Then trace each damaged area. You can mark several spots."}</p>
+    <strong>{outline.length ? (bn ? "২. এবার ক্ষতিগ্রস্ত অংশ ঘিরুন" : "2. Trace damaged areas") : (bn ? "১. পাতার চারপাশ ঘিরুন" : "1. Trace the leaf outline")}</strong>
+    <svg className="severity-canvas" viewBox="0 0 512 512" aria-label={bn ? "পাতা ও দাগ চিহ্নিত করার ছবি" : "Mark leaf and damaged areas"} onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); active.current = [point(e)]; setStroke(active.current); }} onPointerMove={e => { if (active.current.length) { active.current = [...active.current, point(e)]; setStroke(active.current); } }} onPointerUp={finish} onPointerCancel={() => { active.current = []; setStroke([]); }}>
+      <image href={image} width="512" height="512" preserveAspectRatio="none" />
+      {outline.length > 0 && <polygon points={outline.map(p => p.join(",")).join(" ")} fill="#31b77722" stroke="#4aff9b" strokeWidth="3" />}
+      {lesions.map((polygon, i) => <polygon key={i} points={polygon.map(p => p.join(",")).join(" ")} fill="#ef574466" stroke="#ff755d" strokeWidth="2" />)}
+      <polyline points={stroke.map(p => p.join(",")).join(" ")} fill="none" stroke={outline.length ? "#ff755d" : "#4aff9b"} strokeWidth="3" />
+    </svg>
+    <button className="text-button" onClick={() => { setOutline([]); setLesions([]); onMeasure(null); }}><Undo2 size={16} />{bn ? "মুছে আবার আঁকুন" : "Clear and redraw"}</button>
+    <small>{bn ? "এটি আপনার আঁকা দাগের মাপ। AI দিয়ে রোগের তীব্রতা মাপা নয়; পুরো জমির অবস্থাও নয়।" : "This measures your marked area. It is an assisted image measurement, not automated disease severity or whole-field damage."}</small>
+  </div></details>;
+}
+
+export default function ScanInsights({ results, weather, district, image }: { results: DiseaseResult[]; weather: WeatherData | null; district: string; image: string | null }) {
+  const { language } = useLanguage(); const bn = language === "bn";
+  const [severity, setSeverity] = useState<number | null>(null);
+  const [shareError, setShareError] = useState("");
+  const createdAt = useRef(new Date());
+  const hasProblem = results.some(r => ["early_blight", "late_blight"].includes(r.label)) || (severity !== null && severity > 0);
+  const outlook = useMemo(() => spreadOutlook(weather), [weather]);
+  const outlookText = !outlook ? (bn ? "নতুন আবহাওয়ার তথ্য পেলে ছড়ানোর অনুকূল অবস্থা দেখা যাবে।" : "Fresh weather data is needed to check conditions for spread.")
+    : outlook.high ? (bn ? "সামনের দুই দিনে ঠান্ডা ও দীর্ঘ সময় আর্দ্র আবহাওয়া নাবি ধসা বাড়াতে পারে। কাছের গাছও দেখুন এবং কৃষি বিশেষজ্ঞকে জানান।" : "Two consecutive forecast days meet weather conditions that can favour late blight. Inspect nearby plants and consult an agricultural expert.")
+    : (bn ? "পরবর্তী ৩ দিনে এই নিয়মে একটানা অনুকূল আবহাওয়া ধরা পড়েনি। তবু রোগ ছড়াতে পারে—গাছ দেখা চালিয়ে যান।" : "The next three days do not meet this consecutive-day weather rule. Spread is still possible; keep inspecting plants.");
+  const labels = [...new Set(results.map(r => r.labels[language]))].join(", ");
+  const report = [bn ? "আলুসাথী — কৃষকের রিপোর্ট" : "AluSathi — Farmer report", createdAt.current.toLocaleString(bn ? "bn-BD" : "en-GB"), district, `${bn ? "ছবি" : "Photos"}: ${results.length}`, labels,
+    severity === null ? (bn ? "পাতার ক্ষতির পরিমাণ মাপা হয়নি।" : "Damaged area has not been measured.") : `${bn ? "চিহ্নিত পাতার ক্ষতি" : "Manually marked leaf damage"}: ${severity}%`,
+    hasProblem ? outlookText : "", bn ? "একই রকম দাগ পুষ্টির ঘাটতি, পোকার ক্ষতি বা অন্য রোগেও হয়।" : "Similar marks can come from nutrient stress, pests or other diseases.",
+    bn ? "এই রিপোর্ট নিশ্চিত রোগ নির্ণয় নয়। ওষুধ ব্যবহারের আগে কৃষি বিশেষজ্ঞের পরামর্শ নিন। ১৬১২৩।" : "This report is not a confirmed diagnosis. Confirm treatment with an agricultural expert. 16123."].filter(Boolean).join("\n\n");
+  async function share() {
+    try { if (navigator.share) await navigator.share({ title: "AluSathi", text: report }); else downloadFile("AluSathi-report.txt", report); }
+    catch (e) { if (!(e instanceof DOMException && e.name === "AbortError")) setShareError(bn ? "শেয়ার হয়নি। রিপোর্ট ডাউনলোড করুন।" : "Sharing failed. Download the report instead."); }
+  }
+  return <div className="scan-insights">
+    <article className="lookalike-warning"><AlertTriangle /><div><h3>{bn ? "একই রকম দাগ মানেই একই রোগ নয়" : "Similar marks can have different causes"}</h3><p>{bn ? "পুষ্টির ঘাটতি, পোকার ক্ষতি, রোদে পোড়া বা অন্য রোগেও এমন দাগ হয়। পাতার নিচে ও গোড়ায় দেখুন। নিশ্চিত না হয়ে ওষুধ দেবেন না।" : "Nutrient stress, pests, sun damage and other diseases can look alike. Check the leaf underside and plant base. Confirm the cause before treatment."}</p></div></article>
+    {image && <SeverityMeasure image={image} onMeasure={setSeverity} />}
+    {severity !== null && <p className="tool-result" role="status">{bn ? "আপনার চিহ্নিত পাতার" : "Of your outlined leaf,"} {severity}% {bn ? "অংশে দাগ চিহ্নিত হয়েছে।" : "is marked as damaged."}</p>}
+    {hasProblem && <article className="spread-outlook"><CloudRain /><div><h3>{bn ? "রোগ ছড়ানোর আবহাওয়া" : "Weather outlook for disease spread"}</h3><p>{outlookText}</p><small>{bn ? "নাবি ধসার Hutton আবহাওয়া-নিয়ম; বাংলাদেশের মাঠে যাচাই হয়নি। এটি ছড়ানোর শতাংশ নয়।" : "Hutton late-blight weather rule; not validated for Bangladesh fields. This is not a probability of spread."} <a href="https://potatoes.ahdb.org.uk/development-and-implementation-of-a-new-national-warning-system-for-potato-late-blight-in-great-britain-hutton-criteria" target="_blank" rel="noreferrer">AHDB</a></small></div></article>}
+    <div className="report-actions"><button className="secondary-main" onClick={share}><Share2 size={18} />{bn ? "রিপোর্ট পাঠান" : "Share report"}</button><button className="secondary-main" onClick={() => window.print()}><Printer size={18} />{bn ? "PDF / প্রিন্ট" : "PDF / print"}</button><button className="text-button" onClick={() => downloadFile("AluSathi-report.txt", report)}>{bn ? "ডাউনলোড" : "Download"}</button></div>
+    {shareError && <p role="alert">{shareError}</p>}
+    <section id="farmer-report" aria-label="Printable farmer report"><h1>আলুসাথী · AluSathi</h1><pre>{report}</pre></section>
+  </div>;
+}

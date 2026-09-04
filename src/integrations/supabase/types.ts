@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      farmer_records: {
+        Row: { id: string; user_id: string; kind: string; payload: Json; created_at: string }
+        Insert: { id?: string; user_id: string; kind: string; payload: Json; created_at?: string }
+        Update: { id?: string; user_id?: string; kind?: string; payload?: Json; created_at?: string }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

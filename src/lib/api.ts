@@ -15,6 +15,7 @@ export interface WeatherData {
   alerts?: WeatherAlert[];
   observed_at?: string;
   cached?: boolean;
+  blight_days?: { date: string; minimum: number; humid_hours: number; hours: number }[];
 }
 
 export type WeatherAlertType = "heavy_rain" | "strong_wind" | "extreme_heat" | "cold" | "thunderstorm";
@@ -78,10 +79,10 @@ export async function getWeather(location: string): Promise<WeatherData> {
     const place = (await geocoding.json()).results?.[0];
     if (!geocoding.ok || !place) throw new Error("Location not found");
 
-    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_gusts_10m_max,weather_code&forecast_days=3&timezone=Asia%2FDhaka`, { signal });
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_gusts_10m_max,weather_code&forecast_days=3&timezone=Asia%2FDhaka`, { signal });
     if (!response.ok) throw new Error(`Weather API Error: ${response.status}`);
 
-    const { current, daily } = await response.json();
+    const { current, daily, hourly } = await response.json();
     if (!current || !daily || !Array.isArray(daily.time) || !Number.isFinite(current.temperature_2m) || !Number.isFinite(current.relative_humidity_2m)) {
       throw new Error("Weather data is incomplete");
     }
@@ -107,6 +108,10 @@ export async function getWeather(location: string): Promise<WeatherData> {
       soil_moisture: Math.min(95, Math.max(10, current.relative_humidity_2m * 0.6 + rainfall * 5)),
       alerts,
       observed_at: new Date().toISOString(),
+      blight_days: daily.time.map((date: string) => {
+        const indices: number[] = (hourly?.time || []).flatMap((time: string, index: number) => time.startsWith(date) && Number.isFinite(hourly.temperature_2m?.[index]) && Number.isFinite(hourly.relative_humidity_2m?.[index]) ? [index] : []);
+        return { date, minimum: indices.length ? Math.min(...indices.map(i => hourly.temperature_2m[i])) : 0, humid_hours: indices.filter(i => hourly.relative_humidity_2m[i] >= 90).length, hours: indices.length };
+      }),
     };
     localStorage.setItem(cacheKey, JSON.stringify(weather));
     return weather;

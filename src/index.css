@@ -301,3 +301,59 @@
   .diary-section { background: white !important; color: black !important; }
   .diary-card { break-inside: avoid; border: 1px solid #bbb !important; background: white !important; color: black !important; }
 }
+
+/* Farmer tools keep the field palette and large touch targets. */
+.farmer-tools-grid { display: grid; gap: 1rem; align-items: start; }
+.farmer-tool { border: 1px solid #d3dfd1; border-radius: 1.35rem; background: #fffdf7; overflow: hidden; box-shadow: 0 10px 30px #153c2010; }
+.farmer-tool > summary { display: flex; align-items: center; gap: .8rem; padding: 1.2rem 1.4rem; cursor: pointer; font-weight: 800; font-size: 1.1rem; color: #17553a; list-style: none; min-height: 64px; }
+.farmer-tool > summary::after { content: "+"; margin-left: auto; font-size: 1.5rem; }
+.farmer-tool[open] > summary::after { content: "−"; }
+.farmer-tool[open] > summary { border-bottom: 1px solid #e1e8dc; }
+.farmer-tool > summary svg { width: 22px; flex-shrink: 0; }
+.tool-body { padding: 1.4rem; display: grid; gap: 1.1rem; color: #183d2a; }
+.tool-body p, .tool-body small { line-height: 1.8; }
+.tool-body small { display: block; color: #526653; }
+.tool-body a:not(.secondary-main) { text-decoration: underline; text-underline-offset: 3px; }
+.tool-body details > summary { cursor: pointer; font-weight: 700; padding: .6rem 0; }
+.tool-form { display: grid; gap: 1rem; }
+.tool-form label, label.tool-form { display: grid; gap: .45rem; font-weight: 700; }
+.tool-form input:not([type=checkbox]), .tool-form select { min-width: 0; width: 100%; min-height: 48px; border: 1px solid #a7b8a7; border-radius: .7rem; padding: .6rem .8rem; background: white; color: #112a20; font-weight: 500; }
+.tool-form input:focus-visible, .tool-form select:focus-visible, .farmer-tool summary:focus-visible { outline: 3px solid #ba6c31; outline-offset: 3px; }
+.tool-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .8rem; }
+.tool-form .checkbox-label { display: flex; align-items: start; gap: .7rem; font-size: .9rem; }
+.checkbox-label input { width: 20px; height: 20px; flex-shrink: 0; margin-top: .25rem; accent-color: #17553a; }
+.tool-result { display: block; background: #e8efe2; border-left: 4px solid #17553a; border-radius: .6rem; padding: 1rem; font-weight: 700; line-height: 1.8; color: #173e29; }
+.tool-notice { margin-top: .75rem; padding: 1rem; background: #fff0cc; border: 1px solid #e6ce91; border-radius: .75rem; line-height: 1.8; color: #4b3612; }
+.report-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.scan-insights { margin-top: 1.5rem; display: grid; gap: 1rem; }
+.lookalike-warning, .spread-outlook { display: flex; align-items: start; gap: 1rem; padding: 1.5rem; border-radius: 1.1rem; background: #f3e7d5; color: #483319; }
+.lookalike-warning > svg, .spread-outlook > svg { flex-shrink: 0; }
+.lookalike-warning h3, .spread-outlook h3 { font-weight: 800; margin-bottom: .4rem; }
+.lookalike-warning p, .spread-outlook p { line-height: 1.85; }
+.spread-outlook { background: #e2ecea; color: #163e36; }
+.spread-outlook small { display: block; margin-top: .75rem; line-height: 1.7; }
+.spread-outlook a { text-decoration: underline; }
+.severity-canvas { width: min(100%, 512px); max-height: 512px; touch-action: none; background: #eee; border-radius: .8rem; cursor: crosshair; }
+.upload-action { position: relative; display: inline-flex; justify-content: center; align-items: center; min-height: 52px; padding: .8rem 1rem; border-radius: .7rem; background: #17553a; color: white; font-weight: 800; cursor: pointer; }
+.upload-action input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+.upload-action:focus-within { outline: 3px solid #b85836; outline-offset: 3px; }
+.reminder-list { list-style: none; padding: 0; display: grid; gap: .75rem; }
+.reminder-list li { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .8rem; border-radius: .8rem; background: #edf2e7; overflow-wrap: anywhere; }
+.reminder-list time { display: block; font-size: .85rem; margin-top: .25rem; }
+.reminder-list button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.account-page { min-height: 100dvh; padding: 2rem 1rem; display: grid; place-items: center; background: radial-gradient(ellipse at top left, #d5e0c4, transparent 60%), #f6efdf; }
+.account-card { display: grid; gap: 1.4rem; width: min(100%, 480px); padding: 2rem; background: #fffdf7; border: 1px solid #b9c6b1; border-radius: 1.5rem; box-shadow: 0 24px 70px #15322017; color: #143723; }
+.account-card h1 { font-size: 2rem; font-weight: 800; line-height: 1.5; }
+.account-card p { line-height: 1.8; }
+.account-privacy { display: flex; gap: .5rem; align-items: center; color: #526653; }
+#farmer-report { display: none; }
+@media (min-width: 900px) { .farmer-tools-grid { grid-template-columns: 1.15fr 1fr; } .farmer-tools-grid > :first-child { grid-row: span 2; } }
+@media (max-width: 480px) { .connection-chip { display: none; } .tool-body { padding: 1rem; } .account-card { padding: 1.5rem; } }
+@media print {
+  main > :not(#scan), .site-header, .bottom-nav, footer, .sync-notice { display: none !important; }
+  #scan { display: block !important; padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  #scan > :not(.scan-insights), .scan-insights > :not(#farmer-report) { display: none !important; }
+  #farmer-report { display: block !important; padding: 1cm; color: black; background: white; }
+  #farmer-report h1 { font-size: 24pt; margin-bottom: 1cm; }
+  #farmer-report pre { white-space: pre-wrap; font: inherit; line-height: 1.8; }
+}

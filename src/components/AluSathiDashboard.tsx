@@ -10,6 +10,13 @@ import { DiseaseLabel, DiseaseResult, getModelHealth, ModelHealth, scanPotatoLea
 import { getWeather, WeatherAlert, WeatherData } from "@/lib/api";
 import { deletePendingScan, listPendingScans, savePendingScan } from "@/lib/pending-scans";
 import { scanPotatoLeafOffline } from "@/lib/offline-model";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import FarmerTools from "@/components/FarmerTools";
+import ScanInsights from "@/components/ScanInsights";
+import TuberScan from "@/components/TuberScan";
+import { deleteRecord, readRecords, writeRecord } from "@/lib/farmer-records";
+import type { Json } from "@/integrations/supabase/types";
 
 type ScanMode = "quick" | "field";
 type Risk = "healthy" | "watch" | "urgent" | "uncertain";
@@ -31,7 +38,6 @@ interface DiaryEntry {
 
 const DIARY_KEY = "alusathi-field-diary-v1";
 const GUIDED_POINTS = [1, 2, 3];
-const FIELD_POINTS = [1, 2, 3, 4, 5];
 
 const COPY = {
   bn: {
@@ -40,7 +46,7 @@ const COPY = {
     online: "অনলাইন", offline: "ইন্টারনেট নেই",
     heroKicker: "বাংলাদেশের আলুচাষির ডিজিটাল সাথী",
     heroTitle: "পাতার ছবি দিন।", heroAccent: "ঝুঁকি আগে জানুন।",
-    heroBody: "আলুসাথী পাতার ছবি, আবহাওয়া ও জমির কয়েকটি স্থান দেখে রোগের সম্ভাবনা বুঝতে সাহায্য করে।",
+    heroBody: "পাতা বা আলুর ছবি দেখুন। আবহাওয়া জানুন, জমির হিসাব রাখুন এবং সহজ পরামর্শ পান।",
     quick: "৩টি ছবি দিয়ে দেখুন", quickHint: "সামনে · পেছনে · পুরো গাছ",
     full: "পুরো জমি দেখুন", fullHint: "৫ জায়গা · বেশি ভরসা",
     trust: "AI ফল নিশ্চিত রোগ নির্ণয় নয়",
@@ -60,8 +66,8 @@ const COPY = {
     syncDone: "টি জমা থাকা ছবি পরীক্ষা হয়েছে",
     result: "আপনার ফল", healthy: "পাতায় ধসা রোগের লক্ষণ পাওয়া যায়নি",
     early: "আগাম ধসার লক্ষণ থাকতে পারে", late: "নাবি ধসার লক্ষণ থাকতে পারে", unknown: "ফল পরিষ্কার নয়",
-    fieldHealthy: "বেশির ভাগ জায়গা ভালো দেখাচ্ছে", fieldWatch: "কয়েকটি জায়গায় সমস্যা দেখা গেছে",
-    fieldUrgent: "জমির অনেক জায়গায় রোগের লক্ষণ", fieldUnknown: "আরও পরিষ্কার ছবি দরকার",
+    fieldHealthy: "ছবিতে ধসার স্পষ্ট লক্ষণ নেই", fieldWatch: "ছবিতে সমস্যার লক্ষণ থাকতে পারে",
+    fieldUrgent: "গাছটি দ্রুত বিশেষজ্ঞকে দেখান", fieldUnknown: "আরও পরিষ্কার ছবি দরকার",
     affected: "সমস্যার সংকেত", clear: "ভালো দেখাচ্ছে", uncertain: "নিশ্চিত নয়",
     now: "এখন", tomorrow: "আগামীকাল", helpAction: "সহায়তা নিন",
     todayHealthy: "আজ আর কিছু করতে হবে না। একই জায়গা মনে রাখুন।",
@@ -70,7 +76,7 @@ const COPY = {
     tomorrowRisk: "কাল সকালে কাছের গাছগুলোও দেখুন এবং নতুন ছবি তুলুন।",
     expertHealthy: "লক্ষণ ছড়ালে কৃষি বিশেষজ্ঞকে জানান।",
     expertRisk: "রাসায়নিক ব্যবহারের আগে কৃষি বিশেষজ্ঞের পরামর্শ নিন।",
-    todayUnknown: "দিনের আলোতে পাঁচ জায়গার পরিষ্কার ছবি আবার তুলুন।", tomorrowUnknown: "এই ফল দেখে কোনো চিকিৎসার সিদ্ধান্ত নেবেন না।", expertUnknown: "আক্রান্ত গাছ কৃষি বিশেষজ্ঞকে দেখান।",
+    todayUnknown: "একই গাছের পরিষ্কার ছবি আবার তুলুন।", tomorrowUnknown: "এই ফল দেখে কোনো চিকিৎসার সিদ্ধান্ত নেবেন না।", expertUnknown: "আক্রান্ত গাছ কৃষি বিশেষজ্ঞকে দেখান।",
     why: "আলুসাথী কেন এমন বলল?", confidence: "AI-এর মিল", limitations: "এই ফল সহায়তার জন্য। নিশ্চিত রোগ নির্ণয় নয়।",
     fieldValidationPending: "মাঠের পরীক্ষায় AI এখনো যথেষ্ট নির্ভরযোগ্য নয়। তাই নিরাপত্তার জন্য রোগের নাম দেখানো হয়নি।",
     photoProblem: "ছবিটি আরেকবার তুলুন", tooDark: "ছবিতে আলো কম ছিল।", tooBright: "ছবিতে আলো বেশি ছিল।", lowContrast: "পাতাটি পরিষ্কার বোঝা যায়নি।",
@@ -81,11 +87,11 @@ const COPY = {
     emptyDiary: "এখনও কোনো পরীক্ষা সেভ হয়নি", emptyDiaryBody: "প্রথম ছবি পরীক্ষা করলে ফল এখানে থাকবে।",
     quickLabel: "৩ ছবির পরীক্ষা", fieldLabel: "৫ জায়গা", scans: "টি ছবি", delete: "মুছুন", clearAll: "সব মুছুন",
     improving: "আগের চেয়ে ভালো", stable: "প্রায় একই আছে", worsening: "আরও নজর দরকার", firstCheck: "প্রথম পরীক্ষা", checkAgain: "একই জমি আবার দেখুন",
-    helpKicker: "সহজ সাহায্য", helpTitle: "তিনটি কথা মনে রাখুন",
+    helpKicker: "আলুর যত্ন", helpTitle: "ভালো আলুর জন্য সহজ যত্ন",
     helpCards: [
-      ["একটি পাতা", "এক ছবিতে একটি পাতা রাখুন। খুব দূর থেকে ছবি তুলবেন না।"],
-      ["দিনের আলো", "সকাল বা বিকেলের আলো ভালো। ছায়া ও ফ্ল্যাশ এড়িয়ে চলুন।"],
-      ["আবার দেখুন", "একটি ফলের ওপর ভরসা না করে ২৪–৪৮ ঘণ্টা পরে আবার পরীক্ষা করুন।"],
+      ["পানি জমতে দেবেন না", "জমির নালা পরিষ্কার রাখুন। মাটির অবস্থা দেখে সেচ দিন; অতিরিক্ত পানি আলুর ক্ষতি করে।"],
+      ["আলু মাটি দিয়ে ঢাকুন", "বের হয়ে আসা আলু মাটি দিয়ে ঢেকে দিন। তোলা আলু আলো থেকে দূরে, শুকনো ও বাতাস চলা জায়গায় রাখুন।"],
+      ["সুস্থ বীজ বাছুন", "রোগমুক্ত বীজ আলু ব্যবহার করুন। পচা বা ক্ষতিগ্রস্ত আলু ভালো আলুর সাথে রাখবেন না।"],
     ],
     sourceTitle: "ভরসাযোগ্য তথ্য",
     sourceBody: "আবহাওয়া ও মাঠের করণীয় BAMIS, BARI ও কৃষি তথ্য সার্ভিসের প্রকাশিত তথ্যের ভিত্তিতে সহজ করা হয়েছে।",
@@ -99,7 +105,7 @@ const COPY = {
     navScan: "Scan", navField: "My field", navHelp: "Help", online: "Online", offline: "Offline",
     heroKicker: "A digital companion for Bangladesh potato farmers",
     heroTitle: "Photograph a leaf.", heroAccent: "See risk earlier.",
-    heroBody: "AluSathi uses leaf photos, weather and checks from different parts of a field to help farmers understand possible disease risk.",
+    heroBody: "Check leaves or potatoes, follow the weather, calculate field needs and keep useful records.",
     quick: "Check with 3 photos", quickHint: "Front · back · whole plant", full: "Check whole field", fullHint: "5 places · stronger evidence",
     trust: "An AI result is not a confirmed diagnosis",
     weatherLoading: "Checking weather…", weatherGood: "Keep watch today", weatherRisk: "Weather may support disease",
@@ -118,8 +124,8 @@ const COPY = {
     syncDone: "saved photo(s) checked",
     result: "Your result", healthy: "No supported blight pattern was found", early: "Early-blight signs may be present",
     late: "Late-blight signs may be present", unknown: "The result is unclear",
-    fieldHealthy: "Most field places look clear", fieldWatch: "Some field places need attention",
-    fieldUrgent: "Disease signs appear across the field", fieldUnknown: "More clear photographs are needed",
+    fieldHealthy: "No clear blight signs in these photos", fieldWatch: "These photos need attention",
+    fieldUrgent: "Show this plant to an expert soon", fieldUnknown: "More clear photographs are needed",
     affected: "Possible problem", clear: "Looks clear", uncertain: "Uncertain",
     now: "Now", tomorrow: "Tomorrow", helpAction: "Get help",
     todayHealthy: "No immediate action is needed. Remember this place.",
@@ -128,7 +134,7 @@ const COPY = {
     tomorrowRisk: "Check nearby plants tomorrow morning and take new photos.",
     expertHealthy: "Contact an agricultural expert if symptoms spread.",
     expertRisk: "Confirm with an agricultural expert before using chemicals.",
-    todayUnknown: "Retake clear daylight photos from all five places.", tomorrowUnknown: "Do not make a treatment decision from these results.", expertUnknown: "Show affected plants to an agricultural expert.",
+    todayUnknown: "Retake clear photographs of the same plant.", tomorrowUnknown: "Do not make a treatment decision from these results.", expertUnknown: "Show affected plants to an agricultural expert.",
     why: "Why did AluSathi say this?", confidence: "AI match", limitations: "This result supports decisions. It is not a confirmed diagnosis.",
     fieldValidationPending: "Field testing shows that this AI is not reliable enough yet. The disease name is hidden for safety.",
     photoProblem: "Take the photograph again", tooDark: "The photograph was too dark.", tooBright: "The photograph was too bright.", lowContrast: "The leaf was not clear enough.",
@@ -138,11 +144,11 @@ const COPY = {
     emptyDiary: "No checks saved yet", emptyDiaryBody: "Your first completed check will appear here.",
     quickLabel: "3-photo check", fieldLabel: "5 places", scans: "photos", delete: "Delete", clearAll: "Delete all",
     improving: "Looks better than before", stable: "About the same", worsening: "Needs more attention", firstCheck: "First check", checkAgain: "Check the same field again",
-    helpKicker: "Simple help", helpTitle: "Remember three things",
+    helpKicker: "Crop care", helpTitle: "Simple care for better potatoes",
     helpCards: [
-      ["One leaf", "Keep one leaf in each photo. Do not photograph from far away."],
-      ["Daylight", "Morning or afternoon light works best. Avoid shadows and flash."],
-      ["Check again", "Do not rely on one result. Check again after 24–48 hours."],
+      ["Keep drains clear", "Avoid standing water. Check the soil before irrigating; excess water can damage potatoes."],
+      ["Keep tubers covered", "Cover exposed growing tubers with soil. Store harvested potatoes away from light in a dry, ventilated place."],
+      ["Start with healthy seed", "Choose disease-free seed potatoes. Keep rotting or damaged potatoes separate from sound ones."],
     ],
     sourceTitle: "Trusted information",
     sourceBody: "Weather and field actions are simplified from published BAMIS, BARI and Agricultural Information Service information.",
@@ -155,27 +161,26 @@ const COPY = {
 
 type Copy = typeof COPY.bn | typeof COPY.en;
 
-function readDiary(): DiaryEntry[] {
+function readDiary(key = DIARY_KEY): DiaryEntry[] {
   try {
-    const entries = JSON.parse(localStorage.getItem(DIARY_KEY) || "[]");
+    const entries = JSON.parse(localStorage.getItem(key) || "[]");
     if (!Array.isArray(entries)) return [];
     return entries.filter((entry): entry is DiaryEntry => entry && typeof entry.id === "string"
-      && typeof entry.createdAt === "string" && typeof entry.district === "string"
+      && typeof entry.createdAt === "string" && Number.isFinite(Date.parse(entry.createdAt)) && typeof entry.district === "string"
       && ["healthy", "watch", "urgent", "uncertain"].includes(entry.risk));
   }
   catch { return []; }
 }
 
-function storeDiaryEntry(entry: DiaryEntry): DiaryEntry[] {
-  const next = [entry, ...readDiary()].slice(0, 30);
-  localStorage.setItem(DIARY_KEY, JSON.stringify(next));
+function storeDiaryEntry(entry: DiaryEntry, key = DIARY_KEY): DiaryEntry[] {
+  const next = [entry, ...readDiary(key)].slice(0, 30);
+  localStorage.setItem(key, JSON.stringify(next));
   return next;
 }
 
 function riskFromResults(results: DiseaseResult[], weather: WeatherData | null): Risk {
-  const affected = results.filter((item) => item.label === "early_blight" || item.label === "late_blight"
-    || (item.label === "unknown" && (item.probabilities.early_blight || 0) + (item.probabilities.late_blight || 0) >= 0.75)).length;
-  const uncertain = results.filter((item) => item.label === "unknown" && !((item.probabilities.early_blight || 0) + (item.probabilities.late_blight || 0) >= 0.75)).length;
+  const affected = results.filter((item) => item.label === "early_blight" || item.label === "late_blight").length;
+  const uncertain = results.filter((item) => item.label === "unknown").length;
   const weatherPressure = Boolean(weather && weather.humidity >= 80 && weather.temperature >= 14 && weather.temperature <= 24);
   if (!results.length || uncertain > results.length / 2) return "uncertain";
   if (affected >= 3 || (affected >= 2 && weatherPressure)) return "urgent";
@@ -227,6 +232,7 @@ function weatherAlertText(alert: WeatherAlert, language: "bn" | "en") {
 }
 
 export default function AluSathiDashboard() {
+  const { user, signOut } = useAuth();
   const { language, setLanguage } = useLanguage();
   const copy = COPY[language];
   const [mode, setMode] = useState<ScanMode>("quick");
@@ -241,7 +247,23 @@ export default function AluSathiDashboard() {
   const [district, setDistrict] = useState(() => localStorage.getItem("alusathi-district") || "Rangpur");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
-  const [diary, setDiary] = useState<DiaryEntry[]>(readDiary);
+  const [diary, setDiary] = useState<DiaryEntry[]>(() => readDiary());
+  const [cloudMessage, setCloudMessage] = useState("");
+  const diaryKey = user ? `${DIARY_KEY}-${user.id}` : DIARY_KEY;
+  useEffect(() => {
+    setDiary(readDiary(diaryKey)); setCloudMessage("");
+    if (!user) return;
+    let active = true;
+    readRecords(user.id, "scan").then(rows => {
+      if (!active) return;
+      const local = readDiary(diaryKey);
+      const combined = new Map(local.map(entry => [entry.id, entry]));
+      for (const row of rows) combined.set(row.id, row.payload as unknown as DiaryEntry);
+      localStorage.setItem(diaryKey, JSON.stringify([...combined.values()].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 100)));
+      setDiary(readDiary(diaryKey));
+    }).catch(() => { if (active) setCloudMessage(language === "bn" ? "অনলাইনের খাতা পাওয়া যায়নি। এই ফোনের ফল দেখানো হচ্ছে।" : "Cloud history is unavailable. Showing records saved on this phone."); });
+    return () => { active = false; };
+  }, [user, diaryKey, language]);
   const [modelHealth, setModelHealth] = useState<ModelHealth | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [syncedCount, setSyncedCount] = useState(0);
@@ -249,7 +271,7 @@ export default function AluSathiDashboard() {
   const [followUpOf, setFollowUpOf] = useState<string | undefined>();
   const scanRef = useRef<HTMLElement>(null);
   const syncingRef = useRef(false);
-  const scanPoints = mode === "quick" ? GUIDED_POINTS : FIELD_POINTS;
+  const scanPoints = GUIDED_POINTS;
   const scanComplete = fieldResults.length === scanPoints.length;
   const fieldRisk = useMemo(() => riskFromResults(fieldResults, weather), [fieldResults, weather]);
 
@@ -263,11 +285,12 @@ export default function AluSathiDashboard() {
         try {
           const queuedFile = new File([item.blob], item.fileName, { type: item.fileType });
           const queuedResult = await scanPotatoLeaf(queuedFile);
-          setDiary(storeDiaryEntry({
+          const guestDiary = storeDiaryEntry({
             id: crypto.randomUUID(), createdAt: item.createdAt, mode: "quick", district: item.district,
             risk: riskFromResults([queuedResult], null), label: queuedResult.label, scanCount: 1,
             affectedCount: ["early_blight", "late_blight"].includes(queuedResult.label) ? 1 : 0,
-          }));
+          });
+          if (!user) setDiary(guestDiary);
           await deletePendingScan(item.id);
           completed += 1;
         } catch {
@@ -279,7 +302,7 @@ export default function AluSathiDashboard() {
       if (completed) setSyncedCount(completed);
       syncingRef.current = false;
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -321,7 +344,8 @@ export default function AluSathiDashboard() {
   }
 
   function saveDiary(entry: DiaryEntry) {
-    setDiary(storeDiaryEntry(entry));
+    setDiary(storeDiaryEntry(entry, diaryKey));
+    if (user) writeRecord(user.id, "scan", entry.id, entry as unknown as Json, entry.createdAt).catch(() => setCloudMessage(language === "bn" ? "ফল এই ফোনে আছে। অনলাইনে সেভ হয়নি।" : "Saved on this phone; cloud save failed."));
   }
 
   async function analyze() {
@@ -345,7 +369,7 @@ export default function AluSathiDashboard() {
       setFieldResults(nextField);
       if (nextField.length === scanPoints.length) {
         const risk = riskFromResults(nextField, weather);
-        const affectedCount = nextField.filter((item) => (item.probabilities.early_blight || 0) + (item.probabilities.late_blight || 0) >= 0.75).length;
+        const affectedCount = nextField.filter((item) => ["early_blight", "late_blight"].includes(item.label)).length;
         saveDiary({
           id: crypto.randomUUID(), createdAt: new Date().toISOString(), mode, district, risk,
           label: dominantLabel(nextField, risk), scanCount: nextField.length, affectedCount,
@@ -376,9 +400,13 @@ export default function AluSathiDashboard() {
     utterance.onend = () => setSpeaking(false); setSpeaking(true); window.speechSynthesis.speak(utterance);
   }
 
-  function removeDiary(id?: string) {
+  async function removeDiary(id?: string) {
+    if (user) {
+      try { await deleteRecord(user.id, "scan", id); }
+      catch { setCloudMessage(language === "bn" ? "মোছা হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।" : "Could not delete. Check your connection and retry."); return; }
+    }
     const next = id ? diary.filter((entry) => entry.id !== id) : [];
-    localStorage.setItem(DIARY_KEY, JSON.stringify(next)); setDiary(next);
+    localStorage.setItem(diaryKey, JSON.stringify(next)); setDiary(next);
   }
 
   const weatherRisk = Boolean(weather && weather.humidity >= 80 && weather.temperature >= 14 && weather.temperature <= 24);
@@ -390,7 +418,7 @@ export default function AluSathiDashboard() {
       <div className="app-shell flex h-16 items-center justify-between gap-3">
         <a href="#top" className="flex items-center gap-3" aria-label="AluSathi home"><span className="brand-mark"><Leaf size={22} /></span><span><strong className="block text-lg leading-none">আলুসাথী</strong><small className="mt-1 hidden text-[11px] font-semibold text-ink/50 sm:block">{copy.brandLine}</small></span></a>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation"><a className="top-nav" href="#scan"><Camera size={16} />{copy.navScan}</a><a className="top-nav" href="#diary"><History size={16} />{copy.navField}</a><a className="top-nav" href="#help"><HelpCircle size={16} />{copy.navHelp}</a></nav>
-        <div className="flex items-center gap-2"><span className={`connection-chip ${online ? "online" : "offline"}`}>{online ? <ShieldCheck size={14} /> : <WifiOff size={14} />}{online ? copy.online : copy.offline}{pendingCount > 0 ? ` · ${pendingCount}` : ""}</span><button className="icon-button" onClick={() => setLanguage(language === "bn" ? "en" : "bn")} aria-label="Change language"><Globe2 size={18} /><span>{language === "bn" ? "EN" : "বাংলা"}</span></button><button className="icon-button md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu">{menuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>
+        <div className="flex items-center gap-2">{user ? <button className="icon-button" onClick={() => signOut()}>{language === "bn" ? "বের হন" : "Sign out"}</button> : <Link className="icon-button" to="/auth">{language === "bn" ? "লগইন" : "Log in"}</Link>}<span className={`connection-chip ${online ? "online" : "offline"}`}>{online ? <ShieldCheck size={14} /> : <WifiOff size={14} />}{online ? copy.online : copy.offline}{pendingCount > 0 ? ` · ${pendingCount}` : ""}</span><button className="icon-button" onClick={() => setLanguage(language === "bn" ? "en" : "bn")} aria-label="Change language"><Globe2 size={18} /><span>{language === "bn" ? "EN" : "বাংলা"}</span></button><button className="icon-button md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu">{menuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>
       </div>
       {menuOpen && <nav className="mobile-menu app-shell" aria-label="Mobile navigation"><a href="#scan" onClick={() => setMenuOpen(false)}>{copy.navScan}</a><a href="#diary" onClick={() => setMenuOpen(false)}>{copy.navField}</a><a href="#help" onClick={() => setMenuOpen(false)}>{copy.navHelp}</a></nav>}
     </header>
@@ -400,26 +428,29 @@ export default function AluSathiDashboard() {
       <section id="top" className="hero-section"><div className="hero-photo" aria-hidden="true" /><div className="hero-wash" aria-hidden="true" /><div className="nakshi-pattern" aria-hidden="true" />
         <div className="app-shell relative grid min-h-[760px] items-end pb-12 pt-28 sm:min-h-[720px] sm:pb-16 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:pb-8">
           <div className="hero-copy animate-rise"><p className="hero-kicker"><span /><Sprout size={17} />{copy.heroKicker}</p><h1>{copy.heroTitle}<br /><em>{copy.heroAccent}</em></h1><p className="hero-body">{copy.heroBody}</p>
-            <div className="mt-8 grid gap-3 sm:max-w-xl sm:grid-cols-2"><button className="hero-action primary" onClick={() => startScan("quick")}><span className="action-icon"><Camera size={24} /></span><span><strong>{copy.quick}</strong><small>{copy.quickHint}</small></span><ArrowRight className="ml-auto" size={20} /></button><button className="hero-action secondary" onClick={() => startScan("field")}><span className="action-icon"><MapPin size={24} /></span><span><strong>{copy.full}</strong><small>{copy.fullHint}</small></span><ArrowRight className="ml-auto" size={20} /></button></div>
+            <div className="mt-8 grid gap-3 sm:max-w-xl sm:grid-cols-2"><button className="hero-action primary" onClick={() => startScan("quick")}><span className="action-icon"><Camera size={24} /></span><span><strong>{copy.quick}</strong><small>{copy.quickHint}</small></span><ArrowRight className="ml-auto" size={20} /></button><a className="hero-action secondary" href="#tuber"><span className="action-icon"><Sprout size={24} /></span><span><strong>{language === "bn" ? "আলুর ছবি দেখুন" : "Check potatoes"}</strong><small>{language === "bn" ? "তোলা আলুর অবস্থা" : "Harvested tuber check"}</small></span><ArrowRight className="ml-auto" size={20} /></a></div>
             <p className="mt-5 flex items-center gap-2 text-sm font-bold text-ink/60"><ShieldCheck size={17} className="text-leaf" />{copy.trust}</p>
           </div><div className="hidden lg:block" />
         </div>
       </section>
 
       <section className="weather-ribbon" aria-live="polite"><div className="app-shell flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-3"><span className={`weather-icon ${weatherRisk ? "risk" : ""}`}><CloudRain size={21} /></span><div><strong className="block">{weatherLoading ? copy.weatherLoading : weather ? (weatherRisk ? copy.weatherRisk : copy.weatherGood) : copy.weatherUnavailable}</strong>{weather && <small className="text-ink/55">{district} · {weather.temperature}°C · {copy.humidity} {weather.humidity}%{weather.cached ? ` · ${copy.cachedWeather}` : ""}</small>}</div></div><label className="district-picker"><MapPin size={15} /><span className="sr-only">District</span><select value={district} onChange={(event) => setDistrict(event.target.value)}><option>Rangpur</option><option>Bogura</option><option>Dinajpur</option><option>Panchagarh</option><option>Thakurgaon</option><option>Rajshahi</option><option>Munshiganj</option></select><ChevronDown size={15} /></label></div></section>
-      {weatherAlerts.length > 0 && <ExtremeWeatherPanel alerts={weatherAlerts} language={language} copy={copy} speak={speak} />}
+      {weatherAlerts.length > 0 && <ExtremeWeatherPanel alerts={weatherAlerts} language={language} copy={copy} />}
 
       <section id="scan" ref={scanRef} className="app-shell scroll-mt-24 py-16 sm:py-24">
-        <div className="section-heading"><div><p className="section-kicker"><ScanLine size={16} />{copy.scanKicker}</p><h2>{mode === "field" ? copy.fieldTitle : copy.scanTitle}</h2><p>{mode === "field" ? copy.fieldBody : copy.scanBody}</p></div><div className="mode-switch" role="group" aria-label="Scan mode"><button className={mode === "quick" ? "active" : ""} onClick={() => startScan("quick")}>{copy.quick}</button><button className={mode === "field" ? "active" : ""} onClick={() => startScan("field")}>{copy.full}</button></div></div>
+        <div className="section-heading"><div><p className="section-kicker"><ScanLine size={16} />{copy.scanKicker}</p><h2>{copy.scanTitle}</h2><p>{copy.scanBody}</p></div></div>
         {!scanComplete && <div className="field-progress-card"><div className="field-path" aria-label={`${fieldResults.length} of ${scanPoints.length} completed`}>{scanPoints.map((point, index) => <span key={point} className={index < fieldResults.length ? "done" : index === fieldResults.length ? "current" : ""}>{index < fieldResults.length ? <Check size={16} /> : point}</span>)}</div><div><p className="text-sm font-bold text-leaf">{copy.point} {fieldResults.length + 1} {copy.of} {scanPoints.length}</p><strong className="mt-1 block text-xl text-ink">{mode === "quick" ? copy.guidedInstructions[fieldResults.length] : copy.pointInstructions[fieldResults.length]}</strong></div></div>}
         <div className="scan-workspace"><div className="scan-capture"><label className={`camera-stage ${preview ? "has-image" : ""}`}><input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={(event) => chooseFile(event.target.files?.[0])} />{preview ? <img src={preview} alt={language === "bn" ? "বাছাই করা আলু পাতা" : "Selected potato leaf"} /> : <div className="camera-empty"><span className="leaf-frame"><Leaf size={62} /></span><strong>{copy.choose}</strong><small>{copy.formats}</small></div>}{preview && <span className="replace-photo"><RefreshCw size={16} />{copy.replace}</span>}</label><div className="photo-tips"><span><Check />{language === "bn" ? "একটি পাতা" : "One leaf"}</span><span><Check />{language === "bn" ? "দিনের আলো" : "Daylight"}</span><span><Check />{language === "bn" ? "কাছে থেকে" : "Close view"}</span></div>{error && <p className="error-message" role="alert"><AlertTriangle size={18} />{error}</p>}<button className="main-button" disabled={!file || loading} onClick={analyze}>{loading ? <Loader2 className="animate-spin" /> : <ScanLine />}{loading ? copy.analyzing : copy.analyze}</button></div>
           <div className="result-stage" aria-live="polite">{scanComplete ? <FieldResult mode={mode} results={fieldResults} risk={fieldRisk} weather={weather} copy={copy} speak={speak} speaking={speaking} restart={() => startScan(mode)} /> : result ? (result.quality_warning ? <SingleResult result={result} language={language} copy={copy} speak={speak} speaking={speaking} retake={retakeCurrent} /> : <PhotoAccepted copy={copy} offline={result.inference_mode === "offline"} />) : <div className="result-empty"><span><Leaf size={42} /></span><h3>{copy.noResult}</h3><p>{copy.noResultBody}</p></div>}{result && !result.quality_warning && !scanComplete && <button className="next-button" onClick={nextFieldPoint}>{copy.nextPoint}<ArrowRight size={18} /></button>}</div></div>
+        {scanComplete && <ScanInsights key={fieldResults.map(r => r.confidence).join("-")} results={fieldResults} weather={weather} district={district} image={preview} />}
       </section>
 
-      <section id="diary" className="diary-section scroll-mt-20"><div className="app-shell py-16 sm:py-24"><div className="section-heading light"><div><p className="section-kicker"><History size={16} />{copy.diaryKicker}</p><h2>{copy.diaryTitle}</h2><p>{copy.diaryBody}</p></div>{diary.length > 0 && <button className="text-button" onClick={() => removeDiary()}><Trash2 size={16} />{copy.clearAll}</button>}</div>{diary.length === 0 ? <div className="empty-diary"><span><History size={31} /></span><h3>{copy.emptyDiary}</h3><p>{copy.emptyDiaryBody}</p><button className="secondary-main" onClick={() => startScan("quick")}><Camera size={18} />{copy.quick}</button></div> : <div className="diary-grid timeline-grid">{diary.map((entry) => { const previous = entry.followUpOf ? diary.find((item) => item.id === entry.followUpOf) : undefined; return <DiaryCard key={entry.id} entry={entry} trend={trendFromEntries(entry, previous)} language={language} copy={copy} onDelete={() => removeDiary(entry.id)} onRecheck={() => startScan("quick", entry.id)} />; })}</div>}</div></section>
+      <TuberScan />
+      <FarmerTools />
+      <section id="diary" className="diary-section scroll-mt-20"><div className="app-shell py-16 sm:py-24"><div className="section-heading light"><div><p className="section-kicker"><History size={16} />{copy.diaryKicker}</p><h2>{copy.diaryTitle}</h2><p>{copy.diaryBody}</p><p>{user ? (language === "bn" ? "আপনার ব্যক্তিগত অনলাইন খাতা" : "Your private account history") : (language === "bn" ? "এখন শুধু এই ফোনে আছে। অন্য ফোনেও পেতে লগইন করুন।" : "Guest history stays on this phone. Log in for account history.")}</p>{cloudMessage && <p role="status">{cloudMessage}</p>}</div>{diary.length > 0 && <button className="text-button" onClick={() => removeDiary()}><Trash2 size={16} />{copy.clearAll}</button>}</div>{diary.length === 0 ? <div className="empty-diary"><span><History size={31} /></span><h3>{copy.emptyDiary}</h3><p>{copy.emptyDiaryBody}</p><button className="secondary-main" onClick={() => startScan("quick")}><Camera size={18} />{copy.quick}</button></div> : <div className="diary-grid timeline-grid">{diary.map((entry) => { const previous = entry.followUpOf ? diary.find((item) => item.id === entry.followUpOf) : undefined; return <DiaryCard key={entry.id} entry={entry} trend={trendFromEntries(entry, previous)} language={language} copy={copy} onDelete={() => removeDiary(entry.id)} onRecheck={() => startScan("quick", entry.id)} />; })}</div>}</div></section>
 
       <section id="help" className="app-shell scroll-mt-20 py-16 sm:py-24"><div className="section-heading"><div><p className="section-kicker"><HelpCircle size={16} />{copy.helpKicker}</p><h2>{copy.helpTitle}</h2></div></div><div className="help-grid">{copy.helpCards.map(([title, body], index) => <article key={title}><span>{index + 1}</span><h3>{title}</h3><p>{body}</p><button onClick={() => speak(`${title}. ${body}`)}><Ear size={17} />{copy.listen}</button></article>)}</div>
-        <div className="trust-grid"><article className="source-card"><BookOpen /><div><h3>{copy.sourceTitle}</h3><p>{copy.sourceBody}</p><div className="source-links"><a href="https://www.bamis.gov.bd/en/diseases/1/all/52/" target="_blank" rel="noreferrer">BAMIS</a><a href="https://bari.gov.bd/" target="_blank" rel="noreferrer">BARI</a><a href="https://ais.gov.bd/" target="_blank" rel="noreferrer">AIS</a><a href="https://moa.gov.bd/pages/internal-eservices/%E0%A6%95%E0%A7%83%E0%A6%B7%E0%A6%BF-%E0%A6%95%E0%A6%B2-%E0%A6%B8%E0%A7%87%E0%A6%A8%E0%A7%8D%E0%A6%9F%E0%A6%BE%E0%A6%B0-%E0%A7%A7%E0%A7%AC%E0%A7%A7%E0%A7%A8%E0%A7%A9-a71861-694031b6a31054345f0d0e12" target="_blank" rel="noreferrer">১৬১২৩</a></div></div></article><article className="model-card"><ShieldCheck /><div><div className="flex flex-wrap items-center gap-2"><h3>{copy.aboutTitle}</h3><span className={`model-status ${modelHealth?.status !== "ready" ? "missing" : modelHealth.field_validated ? "ready" : "research"}`}>{modelHealth?.status !== "ready" ? copy.modelMissing : modelHealth.field_validated ? copy.modelReady : copy.modelResearch}</span></div><p>{copy.aboutBody}</p><dl><div><dt>{copy.modelVersion}</dt><dd>{modelHealth?.model_version || modelHealth?.model || "MobileNetV3-Small"}</dd></div><div><dt>{copy.regionalTest}</dt><dd>{modelHealth?.regional_test_accuracy ? `${Math.round(modelHealth.regional_test_accuracy * 100)}% · ${modelHealth.regional_test_images?.toLocaleString(language === "bn" ? "bn-BD" : "en-GB")} ${language === "bn" ? "ছবি" : "images"}` : language === "bn" ? "তথ্য নেই" : "Unavailable"}</dd></div><div><dt>{language === "bn" ? "শ্রেণি" : "Classes"}</dt><dd>{language === "bn" ? "সুস্থ · আগাম ধসা · নাবি ধসা" : "Healthy · Early blight · Late blight"}</dd></div></dl></div></article></div>
+        <div className="trust-grid"><article className="source-card"><BookOpen /><div><h3>{copy.sourceTitle}</h3><p>{copy.sourceBody}</p><div className="source-links"><a href="https://www.bamis.gov.bd/diseases/1/all/52" target="_blank" rel="noreferrer">{language === "bn" ? "আলুর রোগ · বামিস" : "Potato diseases · BAMIS"}</a><a href="https://bari.gov.bd/pages/static-pages/6922dd2b933eb65569e13c4e" target="_blank" rel="noreferrer">{language === "bn" ? "চাষের প্রযুক্তি · বারি" : "Crop technology · BARI"}</a><a href="https://ais.gov.bd/pages/krishi-kotha/আলু-সংগ্রহ-ও-সংরক্ষণ-7cc21d-6922d941dbfbab28ce04a4fa" target="_blank" rel="noreferrer">{language === "bn" ? "আলু সংরক্ষণ · এআইএস" : "Potato storage · AIS"}</a><a href="tel:16123" target="_blank" rel="noreferrer">১৬১২৩</a></div></div></article><article className="model-card"><ShieldCheck /><div><div className="flex flex-wrap items-center gap-2"><h3>{copy.aboutTitle}</h3><span className={`model-status ${modelHealth?.status !== "ready" ? "missing" : modelHealth.field_validated ? "ready" : "research"}`}>{modelHealth?.status !== "ready" ? copy.modelMissing : modelHealth.field_validated ? copy.modelReady : copy.modelResearch}</span></div><p>{copy.aboutBody}</p><dl><div><dt>{copy.modelVersion}</dt><dd>{modelHealth?.model_version || modelHealth?.model || "MobileNetV3-Small"}</dd></div><div><dt>{copy.regionalTest}</dt><dd>{modelHealth?.regional_test_accuracy ? `${Math.round(modelHealth.regional_test_accuracy * 100)}% · ${modelHealth.regional_test_images?.toLocaleString(language === "bn" ? "bn-BD" : "en-GB")} ${language === "bn" ? "ছবি" : "images"}` : language === "bn" ? "তথ্য নেই" : "Unavailable"}</dd></div><div><dt>{language === "bn" ? "শ্রেণি" : "Classes"}</dt><dd>{language === "bn" ? "সুস্থ · আগাম ধসা · নাবি ধসা" : "Healthy · Early blight · Late blight"}</dd></div></dl></div></article></div>
       </section>
     </main>
 
@@ -449,8 +480,8 @@ function PhotoAccepted({ copy, offline }: { copy: Copy; offline: boolean }) {
 }
 
 function FieldResult({ mode, results, risk, weather, copy, speak, speaking, restart }: { mode: ScanMode; results: DiseaseResult[]; risk: Risk; weather: WeatherData | null; copy: Copy; speak: (text: string) => void; speaking: boolean; restart: () => void }) {
-  const affected = results.filter((item) => (item.probabilities.early_blight || 0) + (item.probabilities.late_blight || 0) >= 0.75).length;
-  const clear = results.filter((item) => (item.probabilities.healthy || 0) >= 0.5).length;
+  const affected = results.filter((item) => ["early_blight", "late_blight"].includes(item.label)).length;
+  const clear = results.filter((item) => item.label === "healthy").length;
   const uncertain = Math.max(0, results.length - affected - clear);
   const title = riskText(risk, copy); const risky = risk === "watch" || risk === "urgent";
   const offline = results.some((item) => item.inference_mode === "offline");
@@ -467,6 +498,6 @@ function DiaryCard({ entry, trend, language, copy, onDelete, onRecheck }: { entr
   return <article className="diary-card"><div className="timeline-dot" aria-hidden="true" /><div className="flex items-start justify-between gap-3"><span className={`diary-status ${entry.risk}`}>{entry.risk === "healthy" ? <Check /> : <AlertTriangle />}</span><button onClick={onDelete} aria-label={copy.delete}><Trash2 size={16} /></button></div><div className={`trend-chip ${trend}`}><TrendIcon size={15} />{trendText}</div><p className="mt-4 text-xs font-bold uppercase tracking-[.12em] text-white/45">{entry.mode === "field" ? copy.fieldLabel : copy.quickLabel}</p><h3>{riskText(entry.risk, copy)}</h3><div className="mt-5 flex flex-wrap gap-2"><span><MapPin />{entry.district}</span><span><Camera />{entry.scanCount} {copy.scans}</span>{entry.humidity && <span><CloudRain />{entry.humidity}%</span>}{entry.inferenceMode === "offline" && <span><WifiOff />Offline AI</span>}</div><time>{date}</time><button className="recheck-button" onClick={onRecheck}><RefreshCw size={16} />{copy.checkAgain}</button></article>;
 }
 
-function ExtremeWeatherPanel({ alerts, language, copy, speak }: { alerts: WeatherAlert[]; language: "bn" | "en"; copy: Copy; speak: (text: string) => void }) {
-  return <section className="extreme-weather" aria-labelledby="weather-alert-title"><div className="app-shell py-5"><div className="alert-heading"><div><p>{copy.alertSource}</p><h2 id="weather-alert-title">{copy.alertTitle}</h2></div><CloudLightning /></div><div className="weather-alert-grid">{alerts.slice(0, 3).map((alert, index) => { const [title, action] = weatherAlertText(alert, language); const Icon = alert.type === "strong_wind" ? Wind : alert.type === "extreme_heat" ? Flame : alert.type === "cold" ? Snowflake : alert.type === "thunderstorm" ? CloudLightning : CloudRain; const date = new Intl.DateTimeFormat(language === "bn" ? "bn-BD" : "en-GB", { weekday: "short", day: "numeric", month: "short" }).format(new Date(`${alert.date}T12:00:00`)); return <article key={`${alert.type}-${alert.date}-${index}`}><span><Icon /></span><div><small>{date}</small><h3>{title}</h3><p>{action}</p><button onClick={() => speak(`${title}. ${action}`)}><Ear size={16} />{copy.listen}</button></div></article>; })}</div></div></section>;
+function ExtremeWeatherPanel({ alerts, language, copy }: { alerts: WeatherAlert[]; language: "bn" | "en"; copy: Copy }) {
+  return <section className="extreme-weather" aria-labelledby="weather-alert-title"><div className="app-shell py-5"><div className="alert-heading"><div><p>{copy.alertSource}</p><h2 id="weather-alert-title">{copy.alertTitle}</h2></div><CloudLightning /></div><div className="weather-alert-grid">{alerts.slice(0, 3).map((alert, index) => { const [title, action] = weatherAlertText(alert, language); const Icon = alert.type === "strong_wind" ? Wind : alert.type === "extreme_heat" ? Flame : alert.type === "cold" ? Snowflake : alert.type === "thunderstorm" ? CloudLightning : CloudRain; const date = new Intl.DateTimeFormat(language === "bn" ? "bn-BD" : "en-GB", { weekday: "short", day: "numeric", month: "short" }).format(new Date(`${alert.date}T12:00:00`)); return <article key={`${alert.type}-${alert.date}-${index}`}><span><Icon /></span><div><small>{date}</small><h3>{title}</h3><p>{action}</p></div></article>; })}</div></div></section>;
 }

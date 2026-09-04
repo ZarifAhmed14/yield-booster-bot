@@ -15,6 +15,7 @@ from PIL import Image, UnidentifiedImageError
 from torchvision import models, transforms
 
 from ml.inference_policy import CONFIDENCE_THRESHOLD, MARGIN_THRESHOLD, image_quality, should_reject
+from ml.tuber import inspect_tubers
 
 
 MODEL_PATH = Path(os.getenv("ALUSATHI_MODEL", "ml/artifacts/potato_mobilenet_v3.pt"))
@@ -190,6 +191,32 @@ async def predict(request: Request, file: UploadFile = File(...)) -> dict:
         "model_scope": "PlantVillage-trained research model; regional testing did not meet the field-use threshold.",
         "treatment_status": "Screening guidance only—confirm chemical decisions with an agricultural expert.",
     }
+
+
+@app.post("/tuber/inspect")
+async def tuber_inspection(request: Request, file: UploadFile = File(...)) -> dict:
+    client = request.client.host if request.client else "unknown"
+    recent = request_times[client]
+    now = time.monotonic()
+    while recent and recent[0] < now - 60:
+        recent.popleft()
+    if len(recent) >= 20:
+        raise HTTPException(429, "Please wait one minute.")
+    recent.append(now)
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(415, "Upload a JPEG, PNG or WebP image.")
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "Image must be 8 MB or smaller.")
+    try:
+        with Image.open(io.BytesIO(content)) as image:
+            if image.format not in ALLOWED_FORMATS or min(image.size) < 128 or max(image.size) > 8000:
+                raise HTTPException(400, "Use a readable image between 128 and 8,000 pixels.")
+            image.verify()
+        with Image.open(io.BytesIO(content)) as image:
+            return await asyncio.to_thread(inspect_tubers, image)
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+        raise HTTPException(400, "The image could not be read safely.")
 
 
 load_model()

@@ -12,6 +12,9 @@ dist
 dist-ssr
 test-results/
 *.local
+.env
+.env.*
+!.env.example
 .venv/
 .ml-data/
 ml/__pycache__/
