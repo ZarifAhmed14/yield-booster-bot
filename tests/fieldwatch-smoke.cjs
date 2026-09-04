@@ -28,7 +28,7 @@ async function mockExtremeWeather(context) {
 
 async function addThreePhotos(page) {
   for (let step = 0; step < 3; step += 1) {
-    await page.locator('input[type="file"]').setInputFiles(PHOTOS[step]);
+    await page.locator('#scan input[type="file"]').setInputFiles(PHOTOS[step]);
     await page.getByRole("button", { name: /ছবি পরীক্ষা করুন|Check this photo/ }).click();
     if (step < 2) {
       await page.locator(".photo-accepted").waitFor({ timeout: 60_000 });

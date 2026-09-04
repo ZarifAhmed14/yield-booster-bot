@@ -1,7 +1,9 @@
 import { Helmet } from "react-helmet";
 import AluSathiDashboard from "@/components/AluSathiDashboard";
+import {useAuth} from "@/contexts/AuthContext";
 
 export default function Index() {
+  const {user}=useAuth();
   return (
     <>
       <Helmet>
@@ -9,7 +11,7 @@ export default function Index() {
         <meta name="description" content="Bangla-first AI leaf screening, whole-field checks and weather-aware guidance for Bangladesh potato farmers." />
         <meta name="theme-color" content="#112a20" />
       </Helmet>
-      <AluSathiDashboard />
+      <AluSathiDashboard key={user?.id || 'guest'} />
     </>
   );
 }

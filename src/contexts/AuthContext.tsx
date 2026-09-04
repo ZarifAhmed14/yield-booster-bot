@@ -1,87 +1,67 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import type { User } from '@supabase/supabase-js';
+import { accountRequest, getAccessToken, setAccessToken } from '@/integrations/supabase/client';
+import { disablePush } from '@/lib/push';
 
 interface AuthContextType {
-  configured: boolean;
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  signUp: (email: string, password: string, farmerName: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
+  configured: boolean; user: User | null; loading: boolean; recovering: boolean;
+  signUp: (email: string, password: string, name: string) => Promise<{error: Error | null}>;
+  signIn: (email: string, password: string) => Promise<{error: Error | null}>;
+  signOut: () => Promise<void>; finishRecovery: () => void;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-export const accountsConfigured = import.meta.env.VITE_ENABLE_ACCOUNTS === "true";
-
-export function AuthProvider({ children }: { children: ReactNode }) {
+const configured = import.meta.env.VITE_ENABLE_ACCOUNTS === 'true';
+export function AuthProvider({ children }: {children: ReactNode}) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!accountsConfigured) { setLoading(false); return; }
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signUp = async (email: string, password: string, farmerName: string) => {
-    if (!accountsConfigured) return { error: new Error("Accounts are not configured yet.") };
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          farmer_name: farmerName,
-        },
-      },
-    });
-    return { error };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    if (!accountsConfigured) return { error: new Error("Accounts are not configured yet.") };
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, configured: accountsConfigured }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  const [recovering, setRecovering] = useState(false);
+  const refreshBusy = useRef(false);
+  const sessionVersion = useRef(0);
+  function accept(data: {access_token?: string; user?: User}) {
+    setAccessToken(data.access_token || null); setUser(data.user || null);
   }
-  return context;
+  useEffect(() => {
+    if (!configured) { setLoading(false); return; }
+    let active = true;
+    const refresh = async (initial = false) => {
+      if (refreshBusy.current) return;
+      refreshBusy.current = true;
+      const version = sessionVersion.current;
+      try {
+        const fragment = new URLSearchParams(window.location.hash.slice(1));
+        const token = initial ? fragment.get('refresh_token') : null;
+        if (token) {
+          setRecovering(fragment.get('type') === 'recovery');
+          window.history.replaceState(null, '', '/auth');
+        }
+        const data = await accountRequest(token ? 'exchange' : 'session', token ? {refresh_token: token} : {});
+        if (active && version === sessionVersion.current) accept(data);
+      } catch { /* Guest features remain available offline. */ }
+      finally { refreshBusy.current = false; if (active) setLoading(false); }
+    };
+    refresh(true);
+    const interval = window.setInterval(() => refresh(), 4 * 60 * 1000);
+    const online = () => refresh(); window.addEventListener('online', online);
+    return () => { active = false; clearInterval(interval); window.removeEventListener('online', online); };
+  }, []);
+  async function submit(action: string, data: Record<string, unknown>) {
+    sessionVersion.current++;
+    try { const response = await accountRequest(action, data); if (action === 'signin') accept(response); return {error: null}; }
+    catch (error) { return {error: error instanceof Error ? error : new Error('auth_failed')}; }
+  }
+  async function signOut() {
+    sessionVersion.current++;
+    if (user) await disablePush(user.id).catch(() => {});
+    await accountRequest('signout', {access_token: getAccessToken()});
+    if (user) localStorage.removeItem(`alusathi-field-diary-v1-${user.id}`);
+    accept({}); setRecovering(false);
+  }
+  return <AuthContext.Provider value={{configured, user, loading, recovering, finishRecovery: () => setRecovering(false),
+    signIn: (email, password) => submit('signin', {email, password}),
+    signUp: (email, password, name) => submit('signup', {email, password, name}), signOut}}>{children}</AuthContext.Provider>;
+}
+export function useAuth() {
+  const value = useContext(AuthContext);
+  if (!value) throw new Error('AuthProvider missing');
+  return value;
 }

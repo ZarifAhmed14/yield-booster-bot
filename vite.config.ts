@@ -58,6 +58,7 @@ export default defineConfig(() => ({
         ],
       },
       workbox: {
+        importScripts: ["/push-events.js"],
         globPatterns: ["**/*.{js,mjs,css,html,ico,png,svg,webp,woff2,wasm,onnx}"],
         maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
         runtimeCaching: [

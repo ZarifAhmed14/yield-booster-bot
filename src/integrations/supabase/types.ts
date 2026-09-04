@@ -10,91 +10,112 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
       farmer_records: {
-        Row: { id: string; user_id: string; kind: string; payload: Json; created_at: string }
-        Insert: { id?: string; user_id: string; kind: string; payload: Json; created_at?: string }
-        Update: { id?: string; user_id?: string; kind?: string; payload?: Json; created_at?: string }
-        Relationships: []
-      }
-      profiles: {
         Row: {
           created_at: string
-          farmer_name: string | null
           id: string
-          location: string | null
-          updated_at: string
+          kind: string
+          payload: Json
           user_id: string
         }
         Insert: {
           created_at?: string
-          farmer_name?: string | null
           id?: string
-          location?: string | null
-          updated_at?: string
+          kind: string
+          payload: Json
           user_id: string
         }
         Update: {
           created_at?: string
-          farmer_name?: string | null
           id?: string
-          location?: string | null
-          updated_at?: string
+          kind?: string
+          payload?: Json
           user_id?: string
         }
         Relationships: []
       }
-      recommendations_history: {
+      push_public_config: {
         Row: {
-          confidence: number | null
-          created_at: string
-          crop_type: string
-          fertilizer_level: string
-          id: string
-          irrigation_needed: boolean
-          location: string
-          recommendations_text: string | null
-          soil_moisture: number | null
-          soil_ph: number
-          user_id: string
-          weather_humidity: number | null
-          weather_rainfall: number | null
-          weather_temperature: number | null
+          id: boolean
+          public_key: string
         }
         Insert: {
-          confidence?: number | null
-          created_at?: string
-          crop_type: string
-          fertilizer_level: string
-          id?: string
-          irrigation_needed: boolean
-          location: string
-          recommendations_text?: string | null
-          soil_moisture?: number | null
-          soil_ph: number
-          user_id: string
-          weather_humidity?: number | null
-          weather_rainfall?: number | null
-          weather_temperature?: number | null
+          id?: boolean
+          public_key: string
         }
         Update: {
-          confidence?: number | null
+          id?: boolean
+          public_key?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          language: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
           created_at?: string
-          crop_type?: string
-          fertilizer_level?: string
+          endpoint: string
           id?: string
-          irrigation_needed?: boolean
-          location?: string
-          recommendations_text?: string | null
-          soil_moisture?: number | null
-          soil_ph?: number
+          language?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          language?: string
+          p256dh?: string
           user_id?: string
-          weather_humidity?: number | null
-          weather_rainfall?: number | null
-          weather_temperature?: number | null
+        }
+        Relationships: []
+      }
+      treatment_reminders: {
+        Row: {
+          attempts: number
+          completed: boolean
+          created_at: string
+          due_at: string
+          id: string
+          next_attempt_at: string
+          notified_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          completed?: boolean
+          created_at?: string
+          due_at: string
+          id?: string
+          next_attempt_at?: string
+          notified_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          completed?: boolean
+          created_at?: string
+          due_at?: string
+          id?: string
+          next_attempt_at?: string
+          notified_at?: string | null
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -103,7 +124,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_due_reminders: {
+        Args: never
+        Returns: {
+          attempts: number
+          completed: boolean
+          created_at: string
+          due_at: string
+          id: string
+          next_attempt_at: string
+          notified_at: string | null
+          title: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "treatment_reminders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      push_worker_config: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
@@ -122,12 +163,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -151,11 +192,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -176,11 +217,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -201,11 +242,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -218,11 +259,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

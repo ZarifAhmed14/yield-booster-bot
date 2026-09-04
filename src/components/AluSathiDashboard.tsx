@@ -254,15 +254,22 @@ export default function AluSathiDashboard() {
     setDiary(readDiary(diaryKey)); setCloudMessage("");
     if (!user) return;
     let active = true;
-    readRecords(user.id, "scan").then(rows => {
-      if (!active) return;
-      const local = readDiary(diaryKey);
-      const combined = new Map(local.map(entry => [entry.id, entry]));
-      for (const row of rows) combined.set(row.id, row.payload as unknown as DiaryEntry);
-      localStorage.setItem(diaryKey, JSON.stringify([...combined.values()].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 100)));
-      setDiary(readDiary(diaryKey));
-    }).catch(() => { if (active) setCloudMessage(language === "bn" ? "অনলাইনের খাতা পাওয়া যায়নি। এই ফোনের ফল দেখানো হচ্ছে।" : "Cloud history is unavailable. Showing records saved on this phone."); });
-    return () => { active = false; };
+    const sync = async () => {
+      try {
+        for (const key of Object.keys(localStorage).filter(key => key.startsWith(`${diaryKey}-pending-`))) {
+          const pending = JSON.parse(localStorage.getItem(key) || "null") as DiaryEntry | null;
+          if (!pending || !active) continue;
+          await writeRecord(user.id, "scan", pending.id, pending as unknown as Json, pending.createdAt);
+          localStorage.removeItem(key);
+        }
+        const rows = await readRecords(user.id, "scan");
+        if (!active) return;
+        localStorage.setItem(diaryKey, JSON.stringify(rows.map(row => row.payload)));
+        setDiary(readDiary(diaryKey)); setCloudMessage("");
+      } catch { if (active) setCloudMessage(language === "bn" ? "অনলাইনের খাতা পাওয়া যায়নি। এই ফোনের ফল দেখানো হচ্ছে।" : "Cloud history unavailable. Showing this phone's records; unsynced results retry when online."); }
+    };
+    sync(); window.addEventListener("online", sync);
+    return () => { active = false; window.removeEventListener("online", sync); };
   }, [user, diaryKey, language]);
   const [modelHealth, setModelHealth] = useState<ModelHealth | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
@@ -345,7 +352,12 @@ export default function AluSathiDashboard() {
 
   function saveDiary(entry: DiaryEntry) {
     setDiary(storeDiaryEntry(entry, diaryKey));
-    if (user) writeRecord(user.id, "scan", entry.id, entry as unknown as Json, entry.createdAt).catch(() => setCloudMessage(language === "bn" ? "ফল এই ফোনে আছে। অনলাইনে সেভ হয়নি।" : "Saved on this phone; cloud save failed."));
+    if (user) {
+      localStorage.setItem(`${diaryKey}-pending-${entry.id}`, JSON.stringify(entry));
+      writeRecord(user.id, "scan", entry.id, entry as unknown as Json, entry.createdAt)
+        .then(() => localStorage.removeItem(`${diaryKey}-pending-${entry.id}`))
+        .catch(() => setCloudMessage(language === "bn" ? "ফল এই ফোনে আছে। অনলাইনে সেভ হয়নি।" : "Saved on this phone; cloud save failed."));
+    }
   }
 
   async function analyze() {
@@ -406,6 +418,7 @@ export default function AluSathiDashboard() {
       catch { setCloudMessage(language === "bn" ? "মোছা হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।" : "Could not delete. Check your connection and retry."); return; }
     }
     const next = id ? diary.filter((entry) => entry.id !== id) : [];
+    for (const key of Object.keys(localStorage).filter(key => key.startsWith(`${diaryKey}-pending-`) && (!id || key.endsWith(id)))) localStorage.removeItem(key);
     localStorage.setItem(diaryKey, JSON.stringify(next)); setDiary(next);
   }
 
@@ -418,7 +431,7 @@ export default function AluSathiDashboard() {
       <div className="app-shell flex h-16 items-center justify-between gap-3">
         <a href="#top" className="flex items-center gap-3" aria-label="AluSathi home"><span className="brand-mark"><Leaf size={22} /></span><span><strong className="block text-lg leading-none">আলুসাথী</strong><small className="mt-1 hidden text-[11px] font-semibold text-ink/50 sm:block">{copy.brandLine}</small></span></a>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation"><a className="top-nav" href="#scan"><Camera size={16} />{copy.navScan}</a><a className="top-nav" href="#diary"><History size={16} />{copy.navField}</a><a className="top-nav" href="#help"><HelpCircle size={16} />{copy.navHelp}</a></nav>
-        <div className="flex items-center gap-2">{user ? <button className="icon-button" onClick={() => signOut()}>{language === "bn" ? "বের হন" : "Sign out"}</button> : <Link className="icon-button" to="/auth">{language === "bn" ? "লগইন" : "Log in"}</Link>}<span className={`connection-chip ${online ? "online" : "offline"}`}>{online ? <ShieldCheck size={14} /> : <WifiOff size={14} />}{online ? copy.online : copy.offline}{pendingCount > 0 ? ` · ${pendingCount}` : ""}</span><button className="icon-button" onClick={() => setLanguage(language === "bn" ? "en" : "bn")} aria-label="Change language"><Globe2 size={18} /><span>{language === "bn" ? "EN" : "বাংলা"}</span></button><button className="icon-button md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu">{menuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>
+        <div className="flex items-center gap-2">{user ? <button className="icon-button" onClick={() => signOut().catch(() => setCloudMessage(language === "bn" ? "বের হওয়া যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।" : "Could not sign out. Check your connection and retry."))}>{language === "bn" ? "বের হন" : "Sign out"}</button> : <Link className="icon-button" to="/auth">{language === "bn" ? "লগইন" : "Log in"}</Link>}<span className={`connection-chip ${online ? "online" : "offline"}`}>{online ? <ShieldCheck size={14} /> : <WifiOff size={14} />}{online ? copy.online : copy.offline}{pendingCount > 0 ? ` · ${pendingCount}` : ""}</span><button className="icon-button" onClick={() => setLanguage(language === "bn" ? "en" : "bn")} aria-label="Change language"><Globe2 size={18} /><span>{language === "bn" ? "EN" : "বাংলা"}</span></button><button className="icon-button md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu">{menuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>
       </div>
       {menuOpen && <nav className="mobile-menu app-shell" aria-label="Mobile navigation"><a href="#scan" onClick={() => setMenuOpen(false)}>{copy.navScan}</a><a href="#diary" onClick={() => setMenuOpen(false)}>{copy.navField}</a><a href="#help" onClick={() => setMenuOpen(false)}>{copy.navHelp}</a></nav>}
     </header>

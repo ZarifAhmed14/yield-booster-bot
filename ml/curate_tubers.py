@@ -13,10 +13,13 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageOps
 
 SOURCES = {
+    "potatocare": {"url": "https://data.mendeley.com/datasets/7vm7xskfg4/2", "author": "Samiul Islam", "license": "CC BY 4.0"},
+    "bd_healthy": {"url": "https://data.mendeley.com/datasets/5m38z6jthb/1", "author": "Mehedi Hasan Mridha and Nazmus Sakib Mridha", "license": "CC BY 4.0"},
     "original": {"url": "https://data.mendeley.com/datasets/pmbc875pr7/1", "author": "Mafi, Dipu, Moazzam and Uddin", "license": "CC BY 4.0"},
     "hybrid": {"url": "https://zenodo.org/records/20616991", "author": "Cristian Armijos-Sarango", "license": "CC BY 4.0"},
 }
 LABELS = {"Healthy Potato": "healthy", "Blackspot Bruising Disease": "blackspot_bruising", "Potato Dry Rot Disease": "dry_rot", "Potato Soft Rot Disease": "soft_rot", "Potato Brown Rot Disease": "brown_rot", "Buen estado": "healthy", "Defectuoso": "defective_unspecified"}
+LABELS.update({"Healthy Potatoes": "healthy", "Dry Rot": "dry_rot", "Blackspot Bruising": "blackspot_bruising", "Soft Rot": "soft_rot", "Brown Rot": "brown_rot", "Common Scab": "common_scab", "Black Scurf": "black_scurf", "Pink Rot": "pink_rot"})
 
 
 class HashTree:
@@ -49,26 +52,41 @@ class HashTree:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, required=True)
+    parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
     output = args.root / "curated"
     output.mkdir(parents=True, exist_ok=True)
-    if (output / "manifest.csv").exists():
+    if (output / "manifest.csv").exists() and not args.resume:
         raise SystemExit("A curated manifest already exists; use a fresh output directory.")
     rng = random.Random(42)
     rows, rejected = [], Counter()
     counts = Counter()
     exact, tree = set(), HashTree()
-    for source, filename in (("original", "potato_disease_original.zip"), ("hybrid", "hybrid.zip")):
+    if args.resume:
+        with (output / "manifest.csv").open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+        for row in rows:
+            exact.add(row["sha256_pixels"]); tree.add(int(row["dhash"], 16)); counts[row["broad_label"]] += 1
+    seen_source_files = {(r["source"], r["source_file"]) for r in rows}
+    archives = [("bd_healthy", "bd_healthy.zip")] if (args.root / "downloads" / "bd_healthy.zip").exists() else []
+    if (args.root / "downloads" / "potatocare.zip").exists(): archives += [("potatocare", "potatocare.zip")]
+    archives += [("original", "potato_disease_original.zip"), ("hybrid", "hybrid.zip")]
+    for source, filename in archives:
         with zipfile.ZipFile(args.root / "downloads" / filename) as archive:
             names = [n for n in archive.namelist() if n.lower().endswith((".jpg", ".jpeg", ".png"))]
             rng.shuffle(names)
             for index, name in enumerate(names):
-                category = next((LABELS[part] for part in Path(name).parts if part in LABELS), None)
+                if len(rows) >= 13800: break
+                if (source, name) in seen_source_files: continue
+                if "aug" in Path(name).stem.lower():
+                    rejected["explicit_augmentation"] += 1
+                    continue
+                category = "healthy" if source == "bd_healthy" else next((LABELS[part] for part in Path(name).parts if part in LABELS), None)
                 if not category:
                     rejected["unmapped_label"] += 1
                     continue
                 broad = "healthy" if category == "healthy" else "defective"
-                if counts[broad] >= 6900:
+                if broad == "healthy" and counts[broad] >= 6900:
                     continue
                 if archive.getinfo(name).file_size > 20 * 1024 * 1024:
                     rejected["oversized"] += 1
@@ -99,9 +117,11 @@ def main():
     with (output / "manifest.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader(); writer.writerows(rows)
-    summary = {"target": 13800, "accepted": len(rows), "categories": dict(Counter(r["label"] for r in rows)), "rejected": dict(rejected), "sources": SOURCES}
+    summary = {"target": 13800, "accepted": len(rows), "categories": dict(Counter(r["label"] for r in rows)), "rejected_this_pass": dict(rejected), "sources": SOURCES}
     (output / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     card = f"# AluSathi potato tuber collection\n\nAccepted: {len(rows)} / target 13,800.\n\n" + "\n".join(f"- {key}: {value}" for key, value in summary["categories"].items()) + "\n\nSource labels are preserved, not independently diagnosed. Hybrid data mixes Ecuadorian varieties and incorporated public datasets; it is not exclusively Bangladeshi. Defective-unspecified images lack reliable subtype labels. Original disease data comes from Mendeley pmbc875pr7. Author and CC BY 4.0 attribution are recorded for every image in manifest.csv.\n\nImages were decoded, EXIF-normalized, resized only when larger than 1024px, and JPEG encoded. Pixel duplicates and 64-bit difference-hash neighbours within distance 4 were excluded. No new augmentations or synthetic images were generated. Source-level augmentation history and tuber identity are not fully known; accepted images do not mean independent tubers. The publisher's split is recorded for traceability, not endorsed as leakage-free. Group by original tuber/session where available and use newly collected Bangladesh field/tuber photographs for an independent test. Do not mix this collection with the leaf classifier.\n\nThe flat category folders are for curation. Build a separate tuber model, and audit labels with an expert before training. These images do not supply instance masks, counting labels, or calibrated commercial-size grades.\n"
+    card += "\nAdditional source notes: the Bangladesh healthy-originals dataset (5m38z6jthb) contains 150 published images; most overlap the hybrid collection. PotatoCare v2 is a merged-source dataset with unclear original-versus-augmented identity. Its downloaded archive contains 3,905 image files, not the 10,117 stated in its description. Blackleg and Miscellaneous folders were excluded because they do not reliably identify a tuber health class. Files explicitly named as augmented were excluded; unmarked source transformations may remain. Do not treat this collection as an independent evaluation set.\n\nRare disease classes are for exploratory use, not enough to substantiate reliable per-disease performance. Begin with a reviewed healthy/defective task or gather more expert-labelled originals before using these subtypes. Healthy means the publisher labelled the pictured sample healthy; it is not proof of food safety.\n"
+    if len(rows) < 13800: card += f"\nTarget shortfall: {13800-len(rows):,} images. No duplicates or new artificial augmentations were added to fill this gap.\n"
     (output / "DATASET_CARD.md").write_text(card, encoding="utf-8")
     packages = args.root / "packages"; packages.mkdir(exist_ok=True)
     for category in summary["categories"]:
