@@ -88,11 +88,6 @@ def load_model() -> None:
             regional_evaluation = json.load(evaluation_file)
 
 
-@app.on_event("startup")
-def startup() -> None:
-    load_model()
-
-
 @app.middleware("http")
 async def security_headers(request, call_next):
     response = await call_next(request)

@@ -30,11 +30,12 @@ export async function savePendingScan(file: File, district: string): Promise<voi
     blob: file,
   };
   await new Promise<void>((resolve, reject) => {
-    const request = database.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME).put(item);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-  database.close();
+    const transaction = database.transaction(STORE_NAME, "readwrite");
+    transaction.objectStore(STORE_NAME).put(item);
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error || new Error("Save aborted"));
+    transaction.onerror = () => reject(transaction.error);
+  }).finally(() => database.close());
 }
 
 export async function listPendingScans(): Promise<PendingScan[]> {
@@ -43,17 +44,17 @@ export async function listPendingScans(): Promise<PendingScan[]> {
     const request = database.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).getAll();
     request.onsuccess = () => resolve(request.result as PendingScan[]);
     request.onerror = () => reject(request.error);
-  });
-  database.close();
+  }).finally(() => database.close());
   return items;
 }
 
 export async function deletePendingScan(id: string): Promise<void> {
   const database = await openDatabase();
   await new Promise<void>((resolve, reject) => {
-    const request = database.transaction(STORE_NAME, "readwrite").objectStore(STORE_NAME).delete(id);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-  database.close();
+    const transaction = database.transaction(STORE_NAME, "readwrite");
+    transaction.objectStore(STORE_NAME).delete(id);
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error || new Error("Delete aborted"));
+    transaction.onerror = () => reject(transaction.error);
+  }).finally(() => database.close());
 }

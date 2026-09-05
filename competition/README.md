@@ -2,7 +2,7 @@
 
 ## One-line pitch
 
-AluSathi helps Bangladesh potato farmers photograph a leaf, understand uncertainty in simple Bangla, check five field locations and reach a human expert before taking a risky treatment decision.
+AluSathi helps Bangladesh potato farmers photograph a leaf, understand uncertainty in simple Bangla, collect three guided photos and reach a human expert before taking a risky treatment decision.
 
 ## Why it matters
 
@@ -29,7 +29,7 @@ Leaf-disease AI often performs well on clean online images and poorly in real fi
 | Without AluSathi | With AluSathi |
 | --- | --- |
 | Farmer notices a mark but may not know what evidence to collect | App guides one clear close photo at a time |
-| One leaf may be treated as proof of the whole field | Five-location mode encourages broader observation |
+| One leaf may be treated as proof of the whole field | Three-photo guidance adds leaf-front, leaf-back and plant context |
 | A confident AI answer may be mistaken for a diagnosis | Unsafe or unvalidated results fail closed |
 | Poor internet can end the attempt | Photo stays on the phone and retries after reconnection |
 | Written advice may be hard to read | Guidance can be heard aloud in Bangla |

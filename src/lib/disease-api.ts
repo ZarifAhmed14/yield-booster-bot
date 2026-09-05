@@ -34,7 +34,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 export async function scanPotatoLeaf(file: File): Promise<DiseaseResult> {
   const body = new FormData();
   body.append("file", file);
-  const response = await fetch(`${API_BASE_URL}/disease/predict`, { method: "POST", body });
+  const response = await fetch(`${API_BASE_URL}/disease/predict`, { method: "POST", body, signal: AbortSignal.timeout(20000) });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.detail || "The scan could not be completed.");
   return { ...payload, inference_mode: "online" };
@@ -42,7 +42,7 @@ export async function scanPotatoLeaf(file: File): Promise<DiseaseResult> {
 
 export async function getModelHealth(): Promise<ModelHealth | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`);
+    const response = await fetch(`${API_BASE_URL}/health`, { signal: AbortSignal.timeout(8000) });
     if (!response.ok) return null;
     return response.json();
   } catch {

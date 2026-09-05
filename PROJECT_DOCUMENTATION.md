@@ -2,7 +2,7 @@
 
 ## Purpose
 
-AluSathi is a Bangla-first potato-leaf screening prototype for Bangladesh farmers. It helps a farmer photograph one leaf or follow a five-location field check, hear simple guidance, retain a private on-device diary, and recover from poor connectivity.
+AluSathi is a Bangla-first potato-leaf screening prototype for Bangladesh farmers. It helps a farmer complete a three-photo leaf check or screen one harvested potato, hear simple guidance, retain a private on-device diary, and recover from poor connectivity.
 
 It is a screening and research system, not a confirmed diagnosis or pesticide-prescription system.
 
@@ -42,12 +42,12 @@ The active application route is `/`. Legacy source files may remain in the repos
 
 ## Farmer flow
 
-1. Choose one-leaf or five-location mode.
+1. Choose the three-photo leaf check or the harvested-potato check.
 2. Photograph one potato leaf in daylight from close range.
 3. The server verifies the file before inference.
 4. AluSathi either returns a safe screening response or asks for another photo.
 5. The farmer can hear the instructions, retake the photo or call Agriculture Call Centre 16123.
-6. When offline, the photo remains in IndexedDB and is checked after reconnection.
+6. Cached models run on the device offline. If offline leaf inference fails, the photo is queued in IndexedDB for a later server retry.
 
 ## Model state
 
@@ -58,7 +58,7 @@ The active application route is `/`. Legacy source files may remain in the repos
 - Field status: not approved.
 - Default API behavior: fail closed to `unknown` until an approved replacement model is explicitly enabled.
 
-See `MODEL_CARD.md`, `DATASET_CARD.md` and `PHASE1_EVALUATION.md` for evidence.
+See `competition/MODEL_CARD.md`, `competition/DATASET_CARD.md` and `PHASE1_EVALUATION.md` for evidence.
 
 ## Local operation
 

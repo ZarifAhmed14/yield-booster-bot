@@ -20,7 +20,7 @@ export function sampleYield(areaM2: number, sampleM2: number, weights: number[])
 }
 
 export function spreadOutlook(weather: WeatherData | null) {
-  if (!weather || weather.cached || !weather.observed_at || Date.now() - Date.parse(weather.observed_at) > 6 * 3600_000 || !weather.blight_days?.length) return null;
+  if (!weather || weather.cached || !weather.observed_at || !Number.isFinite(Date.parse(weather.observed_at)) || Date.now() - Date.parse(weather.observed_at) > 6 * 3600_000 || !weather.blight_days?.length) return null;
   const days = weather.blight_days;
   const qualifies = (day: typeof days[number]) => day.hours === 24 && day.minimum >= 10 && day.humid_hours >= 6;
   const high = days.some((day, i) => i > 0 && qualifies(day) && qualifies(days[i - 1]) && Date.parse(day.date) - Date.parse(days[i - 1].date) === 86400_000);

@@ -346,6 +346,17 @@
 .account-card h1 { font-size: 2rem; font-weight: 800; line-height: 1.5; }
 .account-card p { line-height: 1.8; }
 .account-privacy { display: flex; gap: .5rem; align-items: center; color: #526653; }
+.storage-finder { display: grid; gap: 1.5rem; padding: 1.5rem; border: 1px solid #b9c6b1; border-radius: 1.25rem; background: linear-gradient(120deg, #edf2e7, #fffdf7); }
+.storage-calculator { margin-top: 1rem; }
+.storage-quotes { display: grid; gap: 1rem; }
+.storage-quote { min-width: 0; padding: 1rem; border: 1px solid #b9c6b1; border-radius: 1rem; }
+.storage-quote legend { padding: 0 .5rem; font-weight: 800; }
+.storage-total { display: grid; gap: .5rem; padding: 1rem; border-radius: .75rem; background: #143723; color: #fffdf7; }
+.storage-total strong { font-size: 1.35rem; color: #f4cd72; }
+.storage-checklist { padding-left: 1.4rem; list-style: disc; line-height: 1.9; }
+#cold-storage .text-button { color: #143723; }
+@media (max-width: 480px) { .storage-quote .tool-columns { grid-template-columns: 1fr; } }
+@media (min-width: 900px) { .storage-finder, .storage-quotes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 #farmer-report { display: none; }
 @media (min-width: 900px) { .farmer-tools-grid { grid-template-columns: 1.15fr 1fr; } .farmer-tools-grid > :first-child { grid-row: span 2; } }
 @media (max-width: 480px) { .connection-chip { display: none; } .tool-body { padding: 1rem; } .account-card { padding: 1.5rem; } }

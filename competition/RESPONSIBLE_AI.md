@@ -15,14 +15,14 @@ AluSathi may help a farmer collect evidence and understand uncertainty. It must 
 
 - Dark, bright and low-contrast images are explained in simple language.
 - Low confidence and close competing predictions are rejected.
-- Uncertain photos do not advance the five-location field check.
+- Photos with quality warnings do not advance the three-photo check. Clear photos with uncertain model results can advance; their uncertainty remains in the final summary.
 - The current model is locked because external regional performance is inadequate.
 - The interface does not display raw confidence while field validation is pending.
 
 ## Privacy
 
 - No account is required for the active farmer flow.
-- Scan history is stored in the browser on the farmer's device.
+- Signed-in history uses private account records and a local cache. Guest history is not displayed.
 - Offline images remain in IndexedDB until successfully processed.
 - Uploaded images are processed in memory and are not silently added to training data.
 - Future dataset contribution requires informed consent and separate governance.
@@ -33,7 +33,7 @@ AluSathi may help a farmer collect evidence and understand uncertainty. It must 
 - Instructions use short sentences and large touch targets.
 - Voice playback supports farmers who prefer listening.
 - Offline recovery addresses unreliable rural connectivity.
-- The five-location workflow reduces dependence on one potentially misleading leaf.
+- Three guided photos collect leaf-front, leaf-back and plant context. This does not estimate whole-field prevalence.
 
 ## Accountability
 

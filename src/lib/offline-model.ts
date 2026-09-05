@@ -24,7 +24,10 @@ function getSession() {
   if (!sessionPromise) {
     ort.env.wasm.numThreads = 1;
     ort.env.wasm.wasmPaths = "/";
-    sessionPromise = ort.InferenceSession.create(MODEL_URL, { executionProviders: ["wasm"] });
+    sessionPromise = ort.InferenceSession.create(MODEL_URL, { executionProviders: ["wasm"] }).catch(error => {
+      sessionPromise = null;
+      throw error;
+    });
   }
   return sessionPromise;
 }

@@ -1,0 +1,29 @@
+{
+  "model_name": "alusathi-tuber-binary",
+  "model_file": "alusathi_tuber_binary_inference.onnx",
+  "task": "healthy-vs-defective",
+  "labels": {
+    "0": "healthy",
+    "1": "defective"
+  },
+  "decision_threshold": 0.4099999999999998,
+  "input_name": "rgb_pixels",
+  "input_shape": [
+    null,
+    224,
+    224,
+    3
+  ],
+  "input_layout": "NHWC",
+  "input_dtype": "float32",
+  "input_colour": "RGB",
+  "input_pixel_range": [
+    0,
+    255
+  ],
+  "preprocessing_inside_model": true,
+  "output_name": "Identity:0",
+  "output_type": "sigmoid defect score",
+  "calibrated_probability": false,
+  "field_validated": false
+}

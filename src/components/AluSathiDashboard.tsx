@@ -13,6 +13,8 @@ import { scanPotatoLeafOffline } from "@/lib/offline-model";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import FarmerTools from "@/components/FarmerTools";
+import ColdStorage from "@/components/ColdStorage";
+import { useDemo } from "@/contexts/DemoContext";
 import ScanInsights from "@/components/ScanInsights";
 import TuberScan from "@/components/TuberScan";
 import { deleteRecord, readRecords, writeRecord } from "@/lib/farmer-records";
@@ -20,7 +22,7 @@ import type { Json } from "@/integrations/supabase/types";
 
 type ScanMode = "quick" | "field";
 type Risk = "healthy" | "watch" | "urgent" | "uncertain";
-type Trend = "first" | "improving" | "stable" | "worsening";
+type Trend = "first" | "improving" | "stable" | "worsening" | "uncertain";
 
 interface DiaryEntry {
   id: string;
@@ -201,6 +203,7 @@ const RISK_RANK: Record<Risk, number> = { healthy: 0, uncertain: 1, watch: 2, ur
 
 function trendFromEntries(current: DiaryEntry, previous?: DiaryEntry): Trend {
   if (!previous) return "first";
+  if (current.risk === "uncertain" || previous.risk === "uncertain" || current.district !== previous.district || current.scanCount !== previous.scanCount) return "uncertain";
   const difference = RISK_RANK[current.risk] - RISK_RANK[previous.risk];
   return difference < 0 ? "improving" : difference > 0 ? "worsening" : "stable";
 }
@@ -233,11 +236,14 @@ function weatherAlertText(alert: WeatherAlert, language: "bn" | "en") {
 
 export default function AluSathiDashboard() {
   const { user, signOut } = useAuth();
+  const { demo, setDemo } = useDemo();
+  const dashboardAccess = Boolean(user) || demo;
   const { language, setLanguage } = useLanguage();
   const copy = COPY[language];
   const [mode, setMode] = useState<ScanMode>("quick");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [reportImage, setReportImage] = useState<string | null>(null);
   const [result, setResult] = useState<DiseaseResult | null>(null);
   const [fieldResults, setFieldResults] = useState<DiseaseResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -304,8 +310,10 @@ export default function AluSathiDashboard() {
           break;
         }
       }
+    } catch {
+      // Storage may be unavailable in private browsing.
     } finally {
-      setPendingCount((await listPendingScans()).length);
+      setPendingCount((await listPendingScans().catch(() => [])).length);
       if (completed) setSyncedCount(completed);
       syncingRef.current = false;
     }
@@ -323,7 +331,7 @@ export default function AluSathiDashboard() {
     listPendingScans().then((items) => {
       setPendingCount(items.length);
       if (navigator.onLine && items.length) syncPendingScans();
-    });
+    }).catch(() => setPendingCount(0));
     return () => {
       window.removeEventListener("online", updateOnline);
       window.removeEventListener("offline", updateOnline);
@@ -332,19 +340,26 @@ export default function AluSathiDashboard() {
   }, [language, syncPendingScans]);
 
   useEffect(() => {
-    setWeatherLoading(true);
-    getWeather(district).then(setWeather).catch(() => setWeather(null)).finally(() => setWeatherLoading(false));
+    let active = true;
+    setWeatherLoading(true); setWeather(null);
+    getWeather(district).then(value => { if (active) setWeather(value); }).catch(() => { if (active) setWeather(null); }).finally(() => { if (active) setWeatherLoading(false); });
     localStorage.setItem("alusathi-district", district);
+    return () => { active = false; };
   }, [district]);
 
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  useEffect(() => () => { if (reportImage) URL.revokeObjectURL(reportImage); }, [reportImage]);
+
   function startScan(nextMode: ScanMode, nextFollowUp?: string) {
+    if (loading) return;
+    setReportImage(null);
     setMode(nextMode); setFile(null); setPreview(null); setResult(null); setFieldResults([]); setError("");
     setFollowUpOf(nextFollowUp);
     requestAnimationFrame(() => scanRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   function chooseFile(next?: File) {
-    if (!next) return;
+    if (!next || loading || scanComplete || (result && !result.quality_warning)) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(next.type) || next.size > 8 * 1024 * 1024) { setError(copy.error); return; }
     if (preview) URL.revokeObjectURL(preview);
     setFile(next); setPreview(URL.createObjectURL(next)); setResult(null); setError("");
@@ -361,7 +376,7 @@ export default function AluSathiDashboard() {
   }
 
   async function analyze() {
-    if (!file) return;
+    if (!file || loading || scanComplete || (result && !result.quality_warning)) return;
     setLoading(true); setError("");
     try {
       let nextResult: DiseaseResult;
@@ -377,6 +392,7 @@ export default function AluSathiDashboard() {
       }
       setResult(nextResult);
       if (nextResult.quality_warning) return;
+      if (!fieldResults.length) setReportImage(URL.createObjectURL(file));
       const nextField = [...fieldResults, nextResult];
       setFieldResults(nextField);
       if (nextField.length === scanPoints.length) {
@@ -393,9 +409,7 @@ export default function AluSathiDashboard() {
   }
 
   function nextFieldPoint() {
-    if (preview) URL.revokeObjectURL(preview);
-    setFile(null); setPreview(null); setResult(null); setError("");
-    scanRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    retakeCurrent();
   }
 
   function retakeCurrent() {
@@ -423,17 +437,17 @@ export default function AluSathiDashboard() {
   }
 
   const weatherRisk = Boolean(weather && weather.humidity >= 80 && weather.temperature >= 14 && weather.temperature <= 24);
-  const weatherAlerts = weather?.alerts || [];
+  const weatherAlerts = weather?.cached ? [] : weather?.alerts || [];
 
   return <div className={language === "bn" ? "font-bangla" : ""}>
     <a href="#main" className="skip-link">Skip to content</a>
     <header className="site-header">
       <div className="app-shell flex h-16 items-center justify-between gap-3">
         <a href="#top" className="flex items-center gap-3" aria-label="AluSathi home"><span className="brand-mark"><Leaf size={22} /></span><span><strong className="block text-lg leading-none">আলুসাথী</strong><small className="mt-1 hidden text-[11px] font-semibold text-ink/50 sm:block">{copy.brandLine}</small></span></a>
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation"><a className="top-nav" href="#scan"><Camera size={16} />{copy.navScan}</a><a className="top-nav" href="#diary"><History size={16} />{copy.navField}</a><a className="top-nav" href="#help"><HelpCircle size={16} />{copy.navHelp}</a></nav>
-        <div className="flex items-center gap-2">{user ? <button className="icon-button" onClick={() => signOut().catch(() => setCloudMessage(language === "bn" ? "বের হওয়া যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।" : "Could not sign out. Check your connection and retry."))}>{language === "bn" ? "বের হন" : "Sign out"}</button> : <Link className="icon-button" to="/auth">{language === "bn" ? "লগইন" : "Log in"}</Link>}<span className={`connection-chip ${online ? "online" : "offline"}`}>{online ? <ShieldCheck size={14} /> : <WifiOff size={14} />}{online ? copy.online : copy.offline}{pendingCount > 0 ? ` · ${pendingCount}` : ""}</span><button className="icon-button" onClick={() => setLanguage(language === "bn" ? "en" : "bn")} aria-label="Change language"><Globe2 size={18} /><span>{language === "bn" ? "EN" : "বাংলা"}</span></button><button className="icon-button md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu">{menuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation"><a className="top-nav" href="#scan"><Camera size={16} />{copy.navScan}</a>{dashboardAccess && <a className="top-nav" href="#diary"><History size={16} />{copy.navField}</a>}<a className="top-nav" href="#help"><HelpCircle size={16} />{copy.navHelp}</a></nav>
+        <div className="flex items-center gap-2">{dashboardAccess ? <button className="icon-button" onClick={() => { setDemo(false); if (user) signOut().catch(() => setCloudMessage(language === "bn" ? "বের হওয়া যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।" : "Could not sign out. Check your connection and retry.")); }}>{language === "bn" ? "বের হন" : "Sign out"}</button> : <Link className="icon-button" to="/auth">{language === "bn" ? "লগইন" : "Log in"}</Link>}<span className={`connection-chip ${online ? "online" : "offline"}`}>{online ? <ShieldCheck size={14} /> : <WifiOff size={14} />}{online ? copy.online : copy.offline}{pendingCount > 0 ? ` · ${pendingCount}` : ""}</span><button className="icon-button" onClick={() => setLanguage(language === "bn" ? "en" : "bn")} aria-label="Change language"><Globe2 size={18} /><span>{language === "bn" ? "EN" : "বাংলা"}</span></button><button className="icon-button md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen}>{menuOpen ? <X size={19} /> : <Menu size={19} />}</button></div>
       </div>
-      {menuOpen && <nav className="mobile-menu app-shell" aria-label="Mobile navigation"><a href="#scan" onClick={() => setMenuOpen(false)}>{copy.navScan}</a><a href="#diary" onClick={() => setMenuOpen(false)}>{copy.navField}</a><a href="#help" onClick={() => setMenuOpen(false)}>{copy.navHelp}</a></nav>}
+      {menuOpen && <nav className="mobile-menu app-shell" aria-label="Mobile navigation"><a href="#scan" onClick={() => setMenuOpen(false)}>{copy.navScan}</a>{dashboardAccess && <a href="#diary" onClick={() => setMenuOpen(false)}>{copy.navField}</a>}<a href="#help" onClick={() => setMenuOpen(false)}>{copy.navHelp}</a></nav>}
     </header>
     {syncedCount > 0 && <div className="sync-notice" role="status"><div className="app-shell"><Check size={18} /><strong>{language === "bn" ? `${syncedCount}${copy.syncDone}` : `${syncedCount} ${copy.syncDone}`}</strong><button onClick={() => setSyncedCount(0)} aria-label={copy.stop}><X size={17} /></button></div></div>}
 
@@ -453,14 +467,16 @@ export default function AluSathiDashboard() {
       <section id="scan" ref={scanRef} className="app-shell scroll-mt-24 py-16 sm:py-24">
         <div className="section-heading"><div><p className="section-kicker"><ScanLine size={16} />{copy.scanKicker}</p><h2>{copy.scanTitle}</h2><p>{copy.scanBody}</p></div></div>
         {!scanComplete && <div className="field-progress-card"><div className="field-path" aria-label={`${fieldResults.length} of ${scanPoints.length} completed`}>{scanPoints.map((point, index) => <span key={point} className={index < fieldResults.length ? "done" : index === fieldResults.length ? "current" : ""}>{index < fieldResults.length ? <Check size={16} /> : point}</span>)}</div><div><p className="text-sm font-bold text-leaf">{copy.point} {fieldResults.length + 1} {copy.of} {scanPoints.length}</p><strong className="mt-1 block text-xl text-ink">{mode === "quick" ? copy.guidedInstructions[fieldResults.length] : copy.pointInstructions[fieldResults.length]}</strong></div></div>}
-        <div className="scan-workspace"><div className="scan-capture"><label className={`camera-stage ${preview ? "has-image" : ""}`}><input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={(event) => chooseFile(event.target.files?.[0])} />{preview ? <img src={preview} alt={language === "bn" ? "বাছাই করা আলু পাতা" : "Selected potato leaf"} /> : <div className="camera-empty"><span className="leaf-frame"><Leaf size={62} /></span><strong>{copy.choose}</strong><small>{copy.formats}</small></div>}{preview && <span className="replace-photo"><RefreshCw size={16} />{copy.replace}</span>}</label><div className="photo-tips"><span><Check />{language === "bn" ? "একটি পাতা" : "One leaf"}</span><span><Check />{language === "bn" ? "দিনের আলো" : "Daylight"}</span><span><Check />{language === "bn" ? "কাছে থেকে" : "Close view"}</span></div>{error && <p className="error-message" role="alert"><AlertTriangle size={18} />{error}</p>}<button className="main-button" disabled={!file || loading} onClick={analyze}>{loading ? <Loader2 className="animate-spin" /> : <ScanLine />}{loading ? copy.analyzing : copy.analyze}</button></div>
+        <div className="scan-workspace"><div className="scan-capture"><label className={`camera-stage ${preview ? "has-image" : ""}`}><input disabled={loading || scanComplete || Boolean(result && !result.quality_warning)} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={(event) => { chooseFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />{preview ? <img src={preview} alt={language === "bn" ? "বাছাই করা আলু পাতা" : "Selected potato leaf"} /> : <div className="camera-empty"><span className="leaf-frame"><Leaf size={62} /></span><strong>{copy.choose}</strong><small>{copy.formats}</small></div>}{preview && <span className="replace-photo"><RefreshCw size={16} />{copy.replace}</span>}</label><div className="photo-tips"><span><Check />{language === "bn" ? "একটি পাতা" : "One leaf"}</span><span><Check />{language === "bn" ? "দিনের আলো" : "Daylight"}</span><span><Check />{language === "bn" ? "কাছে থেকে" : "Close view"}</span></div>{error && <p className="error-message" role="alert"><AlertTriangle size={18} />{error}</p>}<button className="main-button" disabled={!file || loading || scanComplete || Boolean(result && !result.quality_warning)} onClick={analyze}>{loading ? <Loader2 className="animate-spin" /> : <ScanLine />}{loading ? copy.analyzing : copy.analyze}</button></div>
           <div className="result-stage" aria-live="polite">{scanComplete ? <FieldResult mode={mode} results={fieldResults} risk={fieldRisk} weather={weather} copy={copy} speak={speak} speaking={speaking} restart={() => startScan(mode)} /> : result ? (result.quality_warning ? <SingleResult result={result} language={language} copy={copy} speak={speak} speaking={speaking} retake={retakeCurrent} /> : <PhotoAccepted copy={copy} offline={result.inference_mode === "offline"} />) : <div className="result-empty"><span><Leaf size={42} /></span><h3>{copy.noResult}</h3><p>{copy.noResultBody}</p></div>}{result && !result.quality_warning && !scanComplete && <button className="next-button" onClick={nextFieldPoint}>{copy.nextPoint}<ArrowRight size={18} /></button>}</div></div>
-        {scanComplete && <ScanInsights key={fieldResults.map(r => r.confidence).join("-")} results={fieldResults} weather={weather} district={district} image={preview} />}
+        {scanComplete && <ScanInsights key={fieldResults.map(r => r.confidence).join("-")} results={fieldResults} weather={weather} district={district} image={reportImage} />}
       </section>
 
       <TuberScan />
       <FarmerTools />
-      <section id="diary" className="diary-section scroll-mt-20"><div className="app-shell py-16 sm:py-24"><div className="section-heading light"><div><p className="section-kicker"><History size={16} />{copy.diaryKicker}</p><h2>{copy.diaryTitle}</h2><p>{copy.diaryBody}</p><p>{user ? (language === "bn" ? "আপনার ব্যক্তিগত অনলাইন খাতা" : "Your private account history") : (language === "bn" ? "এখন শুধু এই ফোনে আছে। অন্য ফোনেও পেতে লগইন করুন।" : "Guest history stays on this phone. Log in for account history.")}</p>{cloudMessage && <p role="status">{cloudMessage}</p>}</div>{diary.length > 0 && <button className="text-button" onClick={() => removeDiary()}><Trash2 size={16} />{copy.clearAll}</button>}</div>{diary.length === 0 ? <div className="empty-diary"><span><History size={31} /></span><h3>{copy.emptyDiary}</h3><p>{copy.emptyDiaryBody}</p><button className="secondary-main" onClick={() => startScan("quick")}><Camera size={18} />{copy.quick}</button></div> : <div className="diary-grid timeline-grid">{diary.map((entry) => { const previous = entry.followUpOf ? diary.find((item) => item.id === entry.followUpOf) : undefined; return <DiaryCard key={entry.id} entry={entry} trend={trendFromEntries(entry, previous)} language={language} copy={copy} onDelete={() => removeDiary(entry.id)} onRecheck={() => startScan("quick", entry.id)} />; })}</div>}</div></section>
+      {demo && !user && <p className="app-shell tool-notice" role="status">{language === "bn" ? "ডেমো চলছে। কোনো আসল অ্যাকাউন্টে লগইন হয়নি। খাতা এই ফোনেই থাকবে; অনলাইন সেভ ও পুশ খবর বন্ধ।" : "Demo mode. No real account is signed in. History stays on this device; cloud saving and push alerts are unavailable."}</p>}
+      {dashboardAccess && <ColdStorage key={user?.id || "demo"} />}
+      {dashboardAccess && <section id="diary" className="diary-section scroll-mt-20"><div className="app-shell py-16 sm:py-24"><div className="section-heading light"><div><p className="section-kicker"><History size={16} />{copy.diaryKicker}</p><h2>{copy.diaryTitle}</h2><p>{copy.diaryBody}</p><p>{user ? (language === "bn" ? "আপনার ব্যক্তিগত অনলাইন খাতা" : "Your private account history") : (language === "bn" ? "ডেমো: এই ফোনের খাতা; অনলাইনে সেভ হয় না।" : "Demo: this device only; no cloud sync.")}</p>{cloudMessage && <p role="status">{cloudMessage}</p>}</div>{diary.length > 0 && <button className="text-button" onClick={() => removeDiary()}><Trash2 size={16} />{copy.clearAll}</button>}</div>{diary.length === 0 ? <div className="empty-diary"><span><History size={31} /></span><h3>{copy.emptyDiary}</h3><p>{copy.emptyDiaryBody}</p><button className="secondary-main" onClick={() => startScan("quick")}><Camera size={18} />{copy.quick}</button></div> : <div className="diary-grid timeline-grid">{diary.map((entry) => { const previous = entry.followUpOf ? diary.find((item) => item.id === entry.followUpOf) : undefined; return <DiaryCard key={entry.id} entry={entry} trend={trendFromEntries(entry, previous)} language={language} copy={copy} onDelete={() => removeDiary(entry.id)} onRecheck={() => { setDistrict(entry.district); startScan("quick", entry.id); }} />; })}</div>}</div></section>}
 
       <section id="help" className="app-shell scroll-mt-20 py-16 sm:py-24"><div className="section-heading"><div><p className="section-kicker"><HelpCircle size={16} />{copy.helpKicker}</p><h2>{copy.helpTitle}</h2></div></div><div className="help-grid">{copy.helpCards.map(([title, body], index) => <article key={title}><span>{index + 1}</span><h3>{title}</h3><p>{body}</p><button onClick={() => speak(`${title}. ${body}`)}><Ear size={17} />{copy.listen}</button></article>)}</div>
         <div className="trust-grid"><article className="source-card"><BookOpen /><div><h3>{copy.sourceTitle}</h3><p>{copy.sourceBody}</p><div className="source-links"><a href="https://www.bamis.gov.bd/diseases/1/all/52" target="_blank" rel="noreferrer">{language === "bn" ? "আলুর রোগ · বামিস" : "Potato diseases · BAMIS"}</a><a href="https://bari.gov.bd/pages/static-pages/6922dd2b933eb65569e13c4e" target="_blank" rel="noreferrer">{language === "bn" ? "চাষের প্রযুক্তি · বারি" : "Crop technology · BARI"}</a><a href="https://ais.gov.bd/pages/krishi-kotha/আলু-সংগ্রহ-ও-সংরক্ষণ-7cc21d-6922d941dbfbab28ce04a4fa" target="_blank" rel="noreferrer">{language === "bn" ? "আলু সংরক্ষণ · এআইএস" : "Potato storage · AIS"}</a><a href="tel:16123" target="_blank" rel="noreferrer">১৬১২৩</a></div></div></article><article className="model-card"><ShieldCheck /><div><div className="flex flex-wrap items-center gap-2"><h3>{copy.aboutTitle}</h3><span className={`model-status ${modelHealth?.status !== "ready" ? "missing" : modelHealth.field_validated ? "ready" : "research"}`}>{modelHealth?.status !== "ready" ? copy.modelMissing : modelHealth.field_validated ? copy.modelReady : copy.modelResearch}</span></div><p>{copy.aboutBody}</p><dl><div><dt>{copy.modelVersion}</dt><dd>{modelHealth?.model_version || modelHealth?.model || "MobileNetV3-Small"}</dd></div><div><dt>{copy.regionalTest}</dt><dd>{modelHealth?.regional_test_accuracy ? `${Math.round(modelHealth.regional_test_accuracy * 100)}% · ${modelHealth.regional_test_images?.toLocaleString(language === "bn" ? "bn-BD" : "en-GB")} ${language === "bn" ? "ছবি" : "images"}` : language === "bn" ? "তথ্য নেই" : "Unavailable"}</dd></div><div><dt>{language === "bn" ? "শ্রেণি" : "Classes"}</dt><dd>{language === "bn" ? "সুস্থ · আগাম ধসা · নাবি ধসা" : "Healthy · Early blight · Late blight"}</dd></div></dl></div></article></div>
@@ -468,7 +484,7 @@ export default function AluSathiDashboard() {
     </main>
 
     <footer><div className="app-shell"><div className="footer-brand"><span className="brand-mark"><Leaf size={22} /></span><div><strong>আলুসাথী</strong><small>{copy.footer}</small></div></div><p><ShieldCheck size={15} />{copy.privacy}</p></div></footer>
-    <nav className="bottom-nav" aria-label="Mobile navigation"><a href="#scan"><Camera />{copy.navScan}</a><a href="#diary"><History />{copy.navField}</a><a href="#help"><HelpCircle />{copy.navHelp}</a></nav>
+    <nav className="bottom-nav" style={{ gridTemplateColumns: `repeat(${dashboardAccess ? 3 : 2}, minmax(0, 1fr))` }} aria-label="Mobile navigation"><a href="#scan"><Camera />{copy.navScan}</a>{dashboardAccess && <a href="#diary"><History />{copy.navField}</a>}<a href="#help"><HelpCircle />{copy.navHelp}</a></nav>
   </div>;
 }
 
@@ -506,7 +522,7 @@ function FieldResult({ mode, results, risk, weather, copy, speak, speaking, rest
 
 function DiaryCard({ entry, trend, language, copy, onDelete, onRecheck }: { entry: DiaryEntry; trend: Trend; language: "bn" | "en"; copy: Copy; onDelete: () => void; onRecheck: () => void }) {
   const date = new Intl.DateTimeFormat(language === "bn" ? "bn-BD" : "en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(entry.createdAt));
-  const trendText = trend === "improving" ? copy.improving : trend === "worsening" ? copy.worsening : trend === "stable" ? copy.stable : copy.firstCheck;
+  const trendText = trend === "uncertain" ? copy.uncertain : trend === "improving" ? copy.improving : trend === "worsening" ? copy.worsening : trend === "stable" ? copy.stable : copy.firstCheck;
   const TrendIcon = trend === "improving" ? TrendingDown : trend === "worsening" ? TrendingUp : Minus;
   return <article className="diary-card"><div className="timeline-dot" aria-hidden="true" /><div className="flex items-start justify-between gap-3"><span className={`diary-status ${entry.risk}`}>{entry.risk === "healthy" ? <Check /> : <AlertTriangle />}</span><button onClick={onDelete} aria-label={copy.delete}><Trash2 size={16} /></button></div><div className={`trend-chip ${trend}`}><TrendIcon size={15} />{trendText}</div><p className="mt-4 text-xs font-bold uppercase tracking-[.12em] text-white/45">{entry.mode === "field" ? copy.fieldLabel : copy.quickLabel}</p><h3>{riskText(entry.risk, copy)}</h3><div className="mt-5 flex flex-wrap gap-2"><span><MapPin />{entry.district}</span><span><Camera />{entry.scanCount} {copy.scans}</span>{entry.humidity && <span><CloudRain />{entry.humidity}%</span>}{entry.inferenceMode === "offline" && <span><WifiOff />Offline AI</span>}</div><time>{date}</time><button className="recheck-button" onClick={onRecheck}><RefreshCw size={16} />{copy.checkAgain}</button></article>;
 }

@@ -19,7 +19,7 @@ Prefer potato farmers from the target districts. Agricultural students may suppl
 3. Explain the result in your own words.
 4. Show what you would do if the photo is unclear.
 5. Find how to speak with a human expert.
-6. Start the five-location field check and explain why it uses several places.
+6. Start the three-photo check and explain which views it asks for.
 
 ## Observer sheet
 

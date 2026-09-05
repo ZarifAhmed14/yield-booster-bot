@@ -69,11 +69,7 @@ async function addThreePhotos(page) {
   await addThreePhotos(onlinePage);
   let onlineEntries = await onlinePage.evaluate(() => JSON.parse(localStorage.getItem("alusathi-field-diary-v1") || "[]"));
   if (onlineEntries.length !== 1 || onlineEntries[0].scanCount !== 3) throw new Error("Three-photo result was not saved as one timeline entry");
-  await onlinePage.locator(".recheck-button").click();
-  await addThreePhotos(onlinePage);
-  onlineEntries = await onlinePage.evaluate(() => JSON.parse(localStorage.getItem("alusathi-field-diary-v1") || "[]"));
-  if (onlineEntries.length !== 2 || onlineEntries[0].followUpOf !== onlineEntries[1].id) throw new Error("Progress timeline did not link the follow-up check");
-  await onlinePage.locator(".trend-chip").first().waitFor();
+  if (await onlinePage.locator('#diary, a[href="#diary"]').count()) throw new Error("Guest history should be hidden");
   await onlinePage.screenshot({ path: "test-results/three-photo-result-mobile.png", fullPage: true });
   await onlineContext.close();
 

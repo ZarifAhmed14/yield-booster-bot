@@ -1,11 +1,3 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-
-export interface PredictionRequest {
-  crop_type: string;
-  soil_ph: number;
-  location: string;
-}
-
 export interface WeatherData {
   temperature: number;
   rainfall: number;
@@ -47,32 +39,10 @@ export interface PredictionResponse {
   timestamp?: string;
 }
 
-export async function getPrediction(data: PredictionRequest): Promise<PredictionResponse> {
-  const weather = await getWeather(data.location);
-  const response = await fetch(`${API_BASE_URL}/predict`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      crop_type: data.crop_type.split("_")[0],
-      soil_ph: data.soil_ph,
-      soil_moisture: weather.soil_moisture,
-      temperature: weather.temperature,
-      rainfall: weather.rainfall,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
-  }
-
-  return { ...(await response.json()), location: data.location, weather_data: weather };
-}
-
 export async function getWeather(location: string): Promise<WeatherData> {
   const cacheKey = `alusathi-weather-${location.toLowerCase()}`;
-  const cached = localStorage.getItem(cacheKey);
+  let cached: string | null = null;
+  try { cached = localStorage.getItem(cacheKey); } catch { /* Weather works without storage. */ }
   try {
     const signal = AbortSignal.timeout(8_000);
     const geocoding = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json&countryCode=BD`, { signal });
@@ -89,11 +59,11 @@ export async function getWeather(location: string): Promise<WeatherData> {
     const rainfall = current.precipitation ?? 0;
     const alerts: WeatherAlert[] = [];
     daily.time.forEach((date: string, index: number) => {
-      const maximum = daily.temperature_2m_max[index] ?? 0;
-      const minimum = daily.temperature_2m_min[index] ?? 0;
-      const rain = daily.precipitation_sum[index] ?? 0;
-      const gust = daily.wind_gusts_10m_max[index] ?? 0;
-      const code = daily.weather_code[index] ?? 0;
+      const maximum = daily.temperature_2m_max?.[index] ?? NaN;
+      const minimum = daily.temperature_2m_min?.[index] ?? NaN;
+      const rain = daily.precipitation_sum?.[index] ?? NaN;
+      const gust = daily.wind_gusts_10m_max?.[index] ?? NaN;
+      const code = daily.weather_code?.[index] ?? NaN;
       if (code >= 95) alerts.push({ type: "thunderstorm", date, value: code });
       if (rain >= 50) alerts.push({ type: "heavy_rain", date, value: rain });
       if (gust >= 50) alerts.push({ type: "strong_wind", date, value: gust });
@@ -105,7 +75,6 @@ export async function getWeather(location: string): Promise<WeatherData> {
       rainfall,
       humidity: current.relative_humidity_2m,
       weather: current.weather_code < 3 ? "Clear" : current.weather_code < 50 ? "Cloudy" : current.weather_code < 70 ? "Rain" : "Storms",
-      soil_moisture: Math.min(95, Math.max(10, current.relative_humidity_2m * 0.6 + rainfall * 5)),
       alerts,
       observed_at: new Date().toISOString(),
       blight_days: daily.time.map((date: string) => {
@@ -113,7 +82,7 @@ export async function getWeather(location: string): Promise<WeatherData> {
         return { date, minimum: indices.length ? Math.min(...indices.map(i => hourly.temperature_2m[i])) : 0, humid_hours: indices.filter(i => hourly.relative_humidity_2m[i] >= 90).length, hours: indices.length };
       }),
     };
-    localStorage.setItem(cacheKey, JSON.stringify(weather));
+    try { localStorage.setItem(cacheKey, JSON.stringify(weather)); } catch { /* Keep fresh data if storage is full. */ }
     return weather;
   } catch (error) {
     if (cached) {
@@ -123,14 +92,5 @@ export async function getWeather(location: string): Promise<WeatherData> {
       } catch { /* Ignore damaged local cache. */ }
     }
     throw error;
-  }
-}
-
-export async function checkHealth(): Promise<boolean> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/health`);
-    return response.ok;
-  } catch {
-    return false;
   }
 }

@@ -1,0 +1,21 @@
+{
+  "accuracy": 0.9922308546059934,
+  "balanced_accuracy": 0.992595487807526,
+  "roc_auc": 0.9996168097882108,
+  "healthy_recall": 0.9945280437756497,
+  "defect_recall": 0.9906629318394025,
+  "defect_precision": 0.996244131455399,
+  "decision_threshold": 0.4099999999999998,
+  "selected_training_stage": "stage2",
+  "confusion_matrix": [
+    [
+      727,
+      4
+    ],
+    [
+      10,
+      1061
+    ]
+  ],
+  "evaluation_scope": "Internal holdout only; not independent Bangladesh field validation."
+}
